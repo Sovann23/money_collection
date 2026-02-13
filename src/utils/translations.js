@@ -49,6 +49,8 @@ export const translations = {
     importCSV: 'Import CSV',
     csvImported: 'CSV imported successfully',
     csvError: 'Error importing CSV',
+    topContributors: 'Top 15 Contributors',
+    currencyAmountBreakdown: 'Currency Amount Breakdown',
   },
   km: {
     appTitle: 'ប្រព័ន្ធកត់ត្រាប្រាក់',
@@ -99,5 +101,7 @@ export const translations = {
     importCSV: 'នាំចូល CSV',
     csvImported: 'បាននាំចូល CSV ដោយជោគជ័យ',
     csvError: 'មានបញ្ហាក្នុងការនាំចូល CSV',
+    topContributors: 'អ្នកចូលរួមច្រើនបំផុត ១៥ នាក់',
+    currencyAmountBreakdown: 'ចំនួនទឹកប្រាក់តាមរូបិយប័ណ្ណ',
   },
 }

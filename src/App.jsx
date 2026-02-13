@@ -7,7 +7,7 @@ import { useToast } from './hooks/useToast'
 import { Header } from './components/Header'
 import { ToastContainer } from './components/Toast'
 import { Statistics } from './components/Statistics'
-import { PaymentBreakdownChart, CurrencyDistributionChart } from './components/Charts'
+import { PaymentBreakdownChart, CurrencyDistributionChart, CurrencyAmountChart, TopContributorsChart } from './components/Charts'
 import { ContributionForm } from './components/ContributionForm'
 import { ContributionsTable } from './components/ContributionsTable'
 
@@ -28,6 +28,8 @@ function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <PaymentBreakdownChart />
           <CurrencyDistributionChart />
+          <TopContributorsChart />
+          <CurrencyAmountChart/>
         </div>
 
         {/* Form + Table row */}
