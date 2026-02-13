@@ -41,11 +41,14 @@ export function ContributionForm({ showToast, editingContribution, setEditingCon
 
   const set = (key, val) => setForm(f => ({ ...f, [key]: val }))
 
+  // Toggle: clicking the already-selected value deselects it (sets to '')
+  const toggle = (key, val) => setForm(f => ({ ...f, [key]: f[key] === val ? '' : val }))
+
   const validate = () => {
     const e = {}
-    if (!form.name.trim())                  e.name   = t.requiredField
-    if (!form.method)                        e.method = t.requiredField
-    if (!form.currency)                      e.currency = t.requiredField
+    if (!form.name.trim())                        e.name     = t.requiredField
+    if (!form.method)                              e.method   = t.requiredField
+    if (!form.currency)                            e.currency = t.requiredField
     if (!form.amount || parseFloat(form.amount) <= 0) e.amount = t.invalidAmount
     setErrors(e)
     return Object.keys(e).length === 0
@@ -99,10 +102,18 @@ export function ContributionForm({ showToast, editingContribution, setEditingCon
         <div>
           <label className="block text-sm font-bold text-gray-700 dark:text-gray-200 mb-1.5">{t.paymentMethod}</label>
           <div className="flex gap-2">
-            <button type="button" className={optionBtn(form.method === 'KHQR', false)} onClick={() => set('method', 'KHQR')}>
+            <button
+              type="button"
+              className={optionBtn(form.method === 'KHQR', false)}
+              onClick={() => toggle('method', 'KHQR')}
+            >
               <KhqrIcon />{t.khqr}
             </button>
-            <button type="button" className={optionBtn(form.method === 'Cash', true)} onClick={() => set('method', 'Cash')}>
+            <button
+              type="button"
+              className={optionBtn(form.method === 'Cash', true)}
+              onClick={() => toggle('method', 'Cash')}
+            >
               <CashIcon />{t.cash}
             </button>
           </div>
@@ -113,10 +124,18 @@ export function ContributionForm({ showToast, editingContribution, setEditingCon
         <div>
           <label className="block text-sm font-bold text-gray-700 dark:text-gray-200 mb-1.5">{t.currency}</label>
           <div className="flex gap-2">
-            <button type="button" className={optionBtn(form.currency === 'USD', false)} onClick={() => set('currency', 'USD')}>
+            <button
+              type="button"
+              className={optionBtn(form.currency === 'USD', false)}
+              onClick={() => toggle('currency', 'USD')}
+            >
               $ {t.dollar}
             </button>
-            <button type="button" className={optionBtn(form.currency === 'KHR', true)} onClick={() => set('currency', 'KHR')}>
+            <button
+              type="button"
+              className={optionBtn(form.currency === 'KHR', true)}
+              onClick={() => toggle('currency', 'KHR')}
+            >
               ៛ {t.riel}
             </button>
           </div>
