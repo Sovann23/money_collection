@@ -535,15 +535,15 @@ export function ContributionsTable({ showToast, setEditingContribution }) {
                 <col style={{ width: '110px' }} /> {/* Name */}
                 <col style={{ width: '90px'  }} /> {/* Method */}
                 <col style={{ width: '110px' }} /> {/* Amount */}
-                <col style={{ width: '100px' }} /> {/* Remark */}
                 <col style={{ width: '90px'  }} /> {/* Date */}
                 <col style={{ width: '70px'  }} /> {/* Actions */}
+                <col style={{ width: '100px' }} /> {/* Remark */}
               </colgroup>
 
               {/* Sticky header */}
               <thead className="sticky top-0 z-10">
                 <tr className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700">
-                  {[t.name, t.method, t.amountCol, t.remarkCol, t.dateCol, t.actions].map((col, idx) => (
+                  {[t.name, t.method, t.amountCol, t.dateCol, t.actions, t.remarkCol].map((col, idx) => (
                     <th
                       key={col}
                       className={`px-3 py-3 text-[15px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap
@@ -583,11 +583,6 @@ export function ContributionsTable({ showToast, setEditingContribution }) {
                       {formatAmount(c.amount, c.currency)}
                     </td>
 
-                    {/* Remark */}
-                    <td className="px-3 py-3 text-gray-500 dark:text-gray-400 max-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
-                      {c.remark || '—'}
-                    </td>
-
                     {/* Date */}
                     <td className="px-3 py-3 text-gray-500 dark:text-gray-400 whitespace-nowrap text-sm">
                       {new Date(c.createdAt).toLocaleDateString()}
@@ -611,6 +606,11 @@ export function ContributionsTable({ showToast, setEditingContribution }) {
                           <TrashIcon />
                         </button>
                       </div>
+                    </td>
+
+                    {/* Remark — shown as a muted column on the far right, truncates if too long */}   {/* Remark */}
+                    <td className="px-3 py-3 text-gray-500 dark:text-gray-400 max-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
+                      {c.remark || '—'}
                     </td>
                   </tr>
                 ))}
