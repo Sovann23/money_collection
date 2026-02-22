@@ -158,7 +158,7 @@ function buildDoughnutSvg(usdCount, khrCount, usdLabel, khrLabel) {
   </svg>`
 }
 
-/** Horizontal bar chart: Top 15 Contributors (stacked USD + KHR converted) */
+/** Horizontal bar chart: Top 15 Contributors — fixed height matching Currency Amount chart */
 function buildTopContributorsSvg(contributions, dollarLabel, rielLabel) {
   const KHR = 4000
   // Group by name
@@ -173,29 +173,32 @@ function buildTopContributorsSvg(contributions, dollarLabel, rielLabel) {
     .sort(([, a], [, b]) => (b.usd + b.khr / KHR) - (a.usd + a.khr / KHR))
     .slice(0, 15)
 
+  // Fixed dimensions — same height as currency amount chart (200px) so boxes align
+  const W = 320
+  const H = 200
+  const labelW = 90
+  const PAD_TOP = 12
+  const PAD_BOT = 28
+  const chartW = W - labelW - 8
+  const dataH = H - PAD_TOP - PAD_BOT
+
   if (top15.length === 0) {
-    return `<svg xmlns="http://www.w3.org/2000/svg" width="680" height="60">
-      <text x="340" y="35" text-anchor="middle" font-size="13" fill="#94a3b8">No data</text>
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+      <text x="${W/2}" y="${H/2}" text-anchor="middle" font-size="11" fill="#94a3b8">No data</text>
     </svg>`
   }
 
-  const rowH = 28
-  const labelW = 120
-  const PAD_TOP = 10
-  const PAD_BOT = 30
-  const W = 680
-  const chartW = W - labelW - 20
-  const H = top15.length * rowH + PAD_TOP + PAD_BOT
-
+  const rowH = dataH / top15.length
+  const barH = Math.min(rowH * 0.55, 14)
   const maxVal = Math.max(...top15.map(([, v]) => v.usd + v.khr / KHR), 1)
 
-  // Grid lines at 0%, 25%, 50%, 75%, 100%
-  const gridLines = [0, 0.25, 0.5, 0.75, 1].map(f => {
+  // Grid lines at 0%, 50%, 100%
+  const gridLines = [0, 0.5, 1].map(f => {
     const x = labelW + f * chartW
     const label = f === 0 ? '$0' : maxVal * f >= 1000 ? `$${((maxVal * f) / 1000).toFixed(0)}k` : `$${(maxVal * f).toFixed(0)}`
     return `
-      <line x1="${x}" y1="${PAD_TOP}" x2="${x}" y2="${PAD_TOP + top15.length * rowH}" stroke="#e2e8f0" stroke-width="1"/>
-      <text x="${x}" y="${H - 10}" text-anchor="middle" font-size="9" fill="#94a3b8">${label}</text>`
+      <line x1="${x}" y1="${PAD_TOP}" x2="${x}" y2="${PAD_TOP + dataH}" stroke="#e2e8f0" stroke-width="1"/>
+      <text x="${x}" y="${H - 8}" text-anchor="middle" font-size="8" fill="#94a3b8">${label}</text>`
   }).join('')
 
   const bars = top15.map(([name, v], i) => {
@@ -203,32 +206,28 @@ function buildTopContributorsSvg(contributions, dollarLabel, rielLabel) {
     const usdW = (v.usd / maxVal) * chartW
     const khrW = (v.khr / KHR / maxVal) * chartW
     const totalW = usdW + khrW
-    const barH = 16
     const barY = y + (rowH - barH) / 2
 
-    // Truncate name if too long
-    const displayName = name.length > 16 ? name.slice(0, 15) + '…' : name
-
-    // Value label
-    const usdTxt = v.usd > 0 ? `$${v.usd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : ''
-    const khrTxt = v.khr > 0 ? ` + ${v.khr.toLocaleString()}៛` : ''
-    const valLabel = usdTxt + khrTxt
+    const displayName = name.length > 11 ? name.slice(0, 10) + '…' : name
+    const usdTxt = v.usd > 0 ? `$${v.usd.toFixed(0)}` : ''
+    const khrTxt = v.khr > 0 ? `+${(v.khr / 1000).toFixed(0)}k៛` : ''
+    const valLabel = [usdTxt, khrTxt].filter(Boolean).join(' ')
 
     return `
-      <text x="${labelW - 6}" y="${barY + barH / 2 + 4}" text-anchor="end" font-size="10" font-weight="600" fill="#334155">${displayName}</text>
-      ${v.usd > 0 ? `<rect x="${labelW}" y="${barY}" width="${usdW}" height="${barH}" fill="#3B82F6" rx="4"/>` : ''}
-      ${v.khr > 0 ? `<rect x="${labelW + usdW}" y="${barY}" width="${khrW}" height="${barH}" fill="#10B981" rx="4"/>` : ''}
-      <text x="${labelW + totalW + 5}" y="${barY + barH / 2 + 4}" font-size="9" fill="#64748b">${valLabel}</text>`
+      <text x="${labelW - 4}" y="${barY + barH / 2 + 3}" text-anchor="end" font-size="8.5" font-weight="600" fill="#334155">${displayName}</text>
+      ${v.usd > 0 ? `<rect x="${labelW}" y="${barY}" width="${usdW}" height="${barH}" fill="#3B82F6" rx="3"/>` : ''}
+      ${v.khr > 0 ? `<rect x="${labelW + usdW}" y="${barY}" width="${khrW}" height="${barH}" fill="#10B981" rx="3"/>` : ''}
+      <text x="${labelW + totalW + 3}" y="${barY + barH / 2 + 3}" font-size="7.5" fill="#64748b">${valLabel}</text>`
   }).join('')
 
-  // Legend
-  const legY = H - 14
-  const legX = labelW + chartW / 2 - 80
+  // Legend at bottom
+  const legY = H - 10
+  const legX = labelW + chartW / 2 - 55
   const legend = `
-    <rect x="${legX}" y="${legY - 8}" width="9" height="9" rx="2" fill="#3B82F6"/>
-    <text x="${legX + 13}" y="${legY}" font-size="9" fill="#64748b">${dollarLabel} (USD)</text>
-    <rect x="${legX + 80}" y="${legY - 8}" width="9" height="9" rx="2" fill="#10B981"/>
-    <text x="${legX + 93}" y="${legY}" font-size="9" fill="#64748b">${rielLabel} (KHR)</text>`
+    <rect x="${legX}" y="${legY - 7}" width="8" height="8" rx="1.5" fill="#3B82F6"/>
+    <text x="${legX + 11}" y="${legY}" font-size="8" fill="#64748b">${dollarLabel} (USD)</text>
+    <rect x="${legX + 72}" y="${legY - 7}" width="8" height="8" rx="1.5" fill="#10B981"/>
+    <text x="${legX + 83}" y="${legY}" font-size="8" fill="#64748b">${rielLabel} (KHR)</text>`
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
     ${gridLines}
@@ -408,16 +407,13 @@ function buildPdfHtml(contributions, language) {
       font-size:10px;font-weight:700;text-transform:uppercase;
       letter-spacing:0.8px;color:#64748b;margin-bottom:10px;
     }
-    .charts-row{display:flex;gap:16px;margin-bottom:16px;}
+    .charts-row{display:flex;gap:16px;margin-bottom:16px;page-break-inside:avoid;break-inside:avoid;}
+    .charts-row.equal-height{align-items:stretch;}
     .chart-card{
       flex:1;
       border:1px solid #e2e8f0;border-radius:12px;
       padding:16px;background:#fafafa;
-      display:flex;flex-direction:column;align-items:center;
-    }
-    .chart-card.full-width{
-      flex:none;
-      width:100%;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
     }
     .chart-title{
       font-size:10px;font-weight:700;text-transform:uppercase;
@@ -482,10 +478,8 @@ function buildPdfHtml(contributions, language) {
     </div>
   </div>
 
-  <div class="charts-section">
-    <div class="section-heading">${s.chartsTitle}</div>
-
     <!-- Row 1: Payment Method + Currency Distribution -->
+    <!--
     <div class="charts-row">
       <div class="chart-card">
         <div class="chart-title">${s.payBreakdown}</div>
@@ -496,24 +490,21 @@ function buildPdfHtml(contributions, language) {
         ${doughnutSvg}
       </div>
     </div>
+    -->
 
-    <!-- Row 2: Currency Amount Breakdown (left) + spacer keeps consistent layout -->
-    <div class="charts-row">
+    <!-- Row 2: Currency Amount Breakdown + Top 15 Contributors -->
+    <!--
+    <div class="charts-row equal-height">
       <div class="chart-card">
         <div class="chart-title">${s.currAmount}</div>
         ${currAmountSvg}
       </div>
-      <!-- Placeholder to keep two-column grid; hide if only one chart needed -->
-      <div style="flex:1;"></div>
-    </div>
-
-    <!-- Row 3: Top 15 Contributors — full width -->
-    <div class="charts-row">
-      <div class="chart-card full-width" style="width:100%;flex:none;">
+      <div class="chart-card">
         <div class="chart-title">${s.topContrib}</div>
         ${topContribSvg}
       </div>
     </div>
+    -->
   </div>
 
   <div class="section-heading">${s.sectionTitle}</div>
