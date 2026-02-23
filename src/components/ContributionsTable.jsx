@@ -307,7 +307,7 @@ function buildPdfHtml(contributions, language) {
     colNo:         isKm ? 'លរ'                               : '#',
     colName:       isKm ? 'ឈ្មោះ'                            : 'Name',
     colMethod:     isKm ? 'វិធីសាស្ត្រ'                       : 'Method',
-    colAmount:     isKm ? 'ចំនួន'                             : 'Amount',
+    colAmount:     isKm ? 'ចំនួនប្រាក់'                             : 'Amount',
     colRemark:     isKm ? 'កំណត់សម្គាល់'                      : 'Remark',
     colDate:       isKm ? 'កាលបរិច្ឆេទ'                       : 'Date',
     khqr:          'KHQR',
