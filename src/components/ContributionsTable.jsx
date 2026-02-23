@@ -486,7 +486,6 @@ function buildPdfHtml(contributions, language) {
   </div>
 
   <div class="charts-section">
-    <div class="section-heading">${s.chartsTitle}</div>
 
     <!-- Row 1: Payment Method + Currency Distribution -->
     <!--
