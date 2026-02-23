@@ -339,7 +339,6 @@ function buildPdfHtml(contributions, language) {
         </span>
       </td>
       <td class="right bold-col">${formatAmount(c.amount, c.currency)}</td>
-      <td class="muted">${c.remark || '—'}</td>
       <td class="center muted">${new Date(c.createdAt).toLocaleDateString(isKm ? 'km-KH' : 'en-US')}</td>
     </tr>`).join('')
 
@@ -360,6 +359,7 @@ function buildPdfHtml(contributions, language) {
 <html lang="${isKm ? 'km' : 'en'}">
 <head>
   <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>${s.title} – ${s.reportLabel}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="${fontUrl}" rel="stylesheet"/>
@@ -371,6 +371,13 @@ function buildPdfHtml(contributions, language) {
       padding:36px 44px;font-size:12.5px;
       -webkit-print-color-adjust:exact;
       print-color-adjust:exact;
+    }
+    @media screen and (max-width:600px){
+      body{padding:16px 14px;font-size:11px;}
+      .cards{flex-direction:column;}
+      .card-value{font-size:15px;}
+      table{font-size:10px;}
+      thead th,tbody td{padding:6px 8px;}
     }
     .top-bar{
       height:5px;
@@ -478,6 +485,9 @@ function buildPdfHtml(contributions, language) {
     </div>
   </div>
 
+  <div class="charts-section">
+    <div class="section-heading">${s.chartsTitle}</div>
+
     <!-- Row 1: Payment Method + Currency Distribution -->
     <!--
     <div class="charts-row">
@@ -515,12 +525,11 @@ function buildPdfHtml(contributions, language) {
         <th>${s.colName}</th>
         <th class="center">${s.colMethod}</th>
         <th class="right">${s.colAmount}</th>
-        <th>${s.colRemark}</th>
         <th class="center">${s.colDate}</th>
       </tr>
     </thead>
     <tbody>
-      ${rows || `<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:18px;">${s.noData}</td></tr>`}
+      ${rows || `<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:18px;">${s.noData}</td></tr>`}
     </tbody>
   </table>
 </body>
