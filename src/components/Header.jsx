@@ -2,6 +2,7 @@
 
 import { useTheme } from '../contexts/ThemeContext'
 import { useLanguage } from '../contexts/LanguageContext'
+import { useAuth } from '../contexts/AuthContext'
 
 const MoonIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -23,9 +24,26 @@ const SunIcon = () => (
   </svg>
 )
 
+const LogoutIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+    <polyline points="16,17 21,12 16,7" />
+    <line x1="21" y1="12" x2="9" y2="12" />
+  </svg>
+)
+
 export function Header() {
   const { theme, toggleTheme } = useTheme()
   const { language, toggleLanguage, t } = useLanguage()
+  const { signOut } = useAuth()
+
+  const handleLogout = async () => {
+    try {
+      await signOut()
+    } catch (error) {
+      console.error('Error signing out:', error)
+    }
+  }
 
   return (
     <header className="sticky top-0 z-40 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm backdrop-blur no-print">
@@ -57,6 +75,13 @@ export function Header() {
             aria-label="Toggle language"
           >
             {language === 'en' ? '🇬🇧' : '🇰🇭'}
+          </button>
+          <button
+            onClick={handleLogout}
+            className="w-10 h-10 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 flex items-center justify-center hover:bg-red-500 hover:text-white hover:border-red-500 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
+            aria-label="Sign out"
+          >
+            <LogoutIcon />
           </button>
         </div>
       </div>

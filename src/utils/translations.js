@@ -51,6 +51,9 @@ export const translations = {
     csvError: 'Error importing CSV',
     topContributors: 'Top 15 Contributors',
     currencyAmountBreakdown: 'Currency Amount Breakdown',
+    errorSaving: 'Error saving contribution',
+    errorDeleting: 'Error deleting contribution',
+    errorClearing: 'Error clearing contributions',
   },
   km: {
     appTitle: 'ប្រព័ន្ធកត់ត្រាប្រាក់',
@@ -103,5 +106,8 @@ export const translations = {
     csvError: 'មានបញ្ហាក្នុងការនាំចូល CSV',
     topContributors: 'អ្នកចូលរួមច្រើនបំផុត ១៥ នាក់',
     currencyAmountBreakdown: 'ចំនួនទឹកប្រាក់តាមរូបិយប័ណ្ណ',
+    errorSaving: 'មានបញ្ហាក្នុងការរក្សាទុក',
+    errorDeleting: 'មានបញ្ហាក្នុងការលុប',
+    errorClearing: 'មានបញ្ហាក្នុងការលុបទាំងអស់',
   },
 }

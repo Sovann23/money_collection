@@ -26,8 +26,8 @@ export function PaymentBreakdownChart() {
   const { contributions } = useContributions()
   const chartRef = useRef(null)
 
-  const khqr = contributions.filter(c => c.method === 'KHQR').length
-  const cash  = contributions.filter(c => c.method === 'Cash').length
+  const khqr = contributions.filter(c => c.paymentMethod === 'KHQR').length
+  const cash  = contributions.filter(c => c.paymentMethod === 'Cash').length
 
   useChart(chartRef, () => ({
     type: 'bar',
@@ -118,9 +118,9 @@ export function TopContributorsChart() {
   // Group by name — keep USD and KHR totals separate
   const map = {}
   contributions.forEach(c => {
-    if (!map[c.name]) map[c.name] = { usd: 0, khr: 0 }
-    if (c.currency === 'USD') map[c.name].usd += c.amount
-    else                      map[c.name].khr += c.amount
+    if (!map[c.participantName]) map[c.participantName] = { usd: 0, khr: 0 }
+    if (c.currency === 'USD') map[c.participantName].usd += c.amount
+    else                      map[c.participantName].khr += c.amount
   })
 
   // ✅ Rank by TRUE combined USD value: usd + (khr ÷ 4000)

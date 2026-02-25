@@ -164,9 +164,9 @@ function buildTopContributorsSvg(contributions, dollarLabel, rielLabel) {
   // Group by name
   const map = {}
   contributions.forEach(c => {
-    if (!map[c.name]) map[c.name] = { usd: 0, khr: 0 }
-    if (c.currency === 'USD') map[c.name].usd += c.amount
-    else map[c.name].khr += c.amount
+    if (!map[c.participantName]) map[c.participantName] = { usd: 0, khr: 0 }
+    if (c.currency === 'USD') map[c.participantName].usd += c.amount
+    else map[c.participantName].khr += c.amount
   })
 
   const top15 = Object.entries(map)
@@ -322,8 +322,8 @@ function buildPdfHtml(contributions, language) {
 
   const totalUSD  = contributions.filter(c => c.currency === 'USD').reduce((sum, c) => sum + c.amount, 0)
   const totalKHR  = contributions.filter(c => c.currency === 'KHR').reduce((sum, c) => sum + c.amount, 0)
-  const khqrCount = contributions.filter(c => c.method   === 'KHQR').length
-  const cashCount = contributions.filter(c => c.method   === 'Cash').length
+  const khqrCount = contributions.filter(c => c.paymentMethod   === 'KHQR').length
+  const cashCount = contributions.filter(c => c.paymentMethod   === 'Cash').length
   const usdCount  = contributions.filter(c => c.currency === 'USD').length
   const khrCount  = contributions.filter(c => c.currency === 'KHR').length
 
@@ -332,10 +332,10 @@ function buildPdfHtml(contributions, language) {
   const rows = sorted.map((c, i) => `
     <tr class="${i % 2 === 0 ? '' : 'row-alt'}">
       <td class="center muted">${i + 1}</td>
-      <td class="bold-col">${c.name}</td>
+      <td class="bold-col">${c.participantName}</td>
       <td class="center">
-        <span class="badge ${c.method === 'KHQR' ? 'badge-blue' : 'badge-green'}">
-          ${c.method === 'Cash' && isKm ? s.cash : c.method}
+        <span class="badge ${c.paymentMethod === 'KHQR' ? 'badge-blue' : 'badge-green'}">
+          ${c.paymentMethod === 'Cash' && isKm ? s.cash : c.paymentMethod}
         </span>
       </td>
       <td class="right bold-col">${formatAmount(c.amount, c.currency)}</td>
@@ -598,20 +598,35 @@ function PdfModal({ html, onClose }) {
 /* ─── Main Component ──────────────────────────────────────── */
 export function ContributionsTable({ showToast, setEditingContribution }) {
   const { t, language } = useLanguage()
-  const { contributions, deleteContribution, importContributions, clearContributions } = useContributions()
+  const {
+    contributions,
+    deleteContribution,
+    importContributions,
+    clearContributions,
+  } = useContributions()
+  const handleDelete = async (id) => {
+    if (!window.confirm(t.confirmDelete)) return
+    try {
+      await deleteContribution(id)
+      showToast(t.contributionDeleted)
+    } catch (error) {
+      console.error('Error deleting contribution:', error)
+      showToast(t.errorDeleting, 'error')
+    }
+  }
   const [search, setSearch]   = useState('')
   const [pdfHtml, setPdfHtml] = useState(null)
   const fileRef = useRef(null)
 
   const filtered = contributions
-    .filter(c => c.name.toLowerCase().includes(search.toLowerCase()))
+    .filter(c => (c.participantName || c.name || '').toLowerCase().includes(search.toLowerCase()))
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
 
   /* ── Export CSV ── */
   const exportCSV = () => {
     const headers = ['Name', 'Method', 'Currency', 'Amount', 'Remark', 'Date']
     const rows = contributions.map(c => [
-      c.name, c.method, c.currency, c.amount, c.remark || '', new Date(c.createdAt).toISOString(),
+      c.participantName, c.paymentMethod, c.currency, c.amount, c.remark || '', new Date(c.createdAt).toISOString(),
     ])
     const csv = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(',')).join('\n')
     const link = document.createElement('a')
@@ -621,25 +636,28 @@ export function ContributionsTable({ showToast, setEditingContribution }) {
   }
 
   /* ── Import CSV ── */
-  const importCSV = (e) => {
+  const importCSV = async (e) => {
     const file = e.target.files[0]
     if (!file) return
     const reader = new FileReader()
-    reader.onload = (ev) => {
+    reader.onload = async (ev) => {
       try {
         const lines = ev.target.result.split('\n')
         const newRows = lines.slice(1).filter(l => l.trim()).map(line => {
           const vals = line.match(/(".*?"|[^,]+)(?=\s*,|\s*$)/g).map(v => v.replace(/^"|"$/g, '').trim())
           return {
-            id: Date.now() + Math.random(),
-            name: vals[0], method: vals[1], currency: vals[2],
-            amount: parseFloat(vals[3]), remark: vals[4] || '',
+            participantName: vals[0],
+            paymentMethod: vals[1],
+            currency: vals[2],
+            amount: parseFloat(vals[3]),
+            remark: vals[4] || '',
             createdAt: vals[5] || new Date().toISOString(),
           }
         })
-        importContributions(newRows)
+        await importContributions(newRows)
         showToast(t.csvImported)
-      } catch {
+      } catch (error) {
+        console.error('Error importing CSV:', error)
         showToast(t.csvError, 'error')
       }
     }
@@ -648,11 +666,16 @@ export function ContributionsTable({ showToast, setEditingContribution }) {
   }
 
   /* ── Clear All ── */
-  const handleClearAll = () => {
+  const handleClearAll = async () => {
     if (contributions.length === 0) return
     if (window.confirm(t.confirmClearAll || 'Delete ALL records? This cannot be undone.')) {
-      clearContributions()
-      showToast(t.allCleared || 'All records cleared')
+      try {
+        await clearContributions()
+        showToast(t.allCleared || 'All records cleared')
+      } catch (error) {
+        console.error('Error clearing contributions:', error)
+        showToast(t.errorClearing, 'error')
+      }
     }
   }
 
@@ -725,17 +748,17 @@ export function ContributionsTable({ showToast, setEditingContribution }) {
                   >
                     {/* Name */}
                     <td className="px-3 py-3 font-medium text-gray-900 dark:text-gray-100 max-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
-                      {c.name}
+                      {c.participantName}
                     </td>
 
                     {/* Method — centered to match header */}
                     <td className="px-3 py-3 text-center">
                       <span className={`inline-flex items-center justify-center px-2 py-0.5 rounded-lg text-xs font-semibold whitespace-nowrap ${
-                        c.method === 'KHQR'
+                        c.paymentMethod === 'KHQR'
                           ? 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400'
                           : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400'
                       }`}>
-                        {c.method}
+                        {c.paymentMethod}
                       </span>
                     </td>
 
@@ -760,7 +783,7 @@ export function ContributionsTable({ showToast, setEditingContribution }) {
                           <EditIcon />
                         </button>
                         <button
-                          onClick={() => window.confirm(t.confirmDelete) && deleteContribution(c.id)}
+                          onClick={() => handleDelete(c.id)}
                           className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all"
                           title="Delete"
                         >

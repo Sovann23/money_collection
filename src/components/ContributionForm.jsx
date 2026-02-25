@@ -37,7 +37,13 @@ export function ContributionForm({ showToast, editingContribution, setEditingCon
 
   useEffect(() => {
     if (editingContribution) {
-      setForm({ ...editingContribution, amount: editingContribution.amount.toString() })
+      setForm({
+        name: editingContribution.participantName || '',
+        method: editingContribution.paymentMethod || '',
+        currency: editingContribution.currency || '',
+        amount: editingContribution.amount.toString(),
+        remark: editingContribution.remark || ''
+      })
     }
   }, [editingContribution])
 
@@ -56,19 +62,30 @@ export function ContributionForm({ showToast, editingContribution, setEditingCon
     return Object.keys(e).length === 0
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     if (!validate()) return
-    const data = { ...form, amount: parseFloat(form.amount) }
-    if (editingContribution) {
-      updateContribution(editingContribution.id, data)
-      showToast(t.contributionUpdated)
-      setEditingContribution(null)
-    } else {
-      addContribution(data)
-      showToast(t.contributionAdded)
+    const data = {
+      participantName: form.name,
+      paymentMethod: form.method,
+      currency: form.currency,
+      amount: parseFloat(form.amount),
+      remark: form.remark
     }
-    setForm(EMPTY)
+    try {
+      if (editingContribution) {
+        await updateContribution(editingContribution.id, data)
+        showToast(t.contributionUpdated)
+        setEditingContribution(null)
+      } else {
+        await addContribution(data)
+        showToast(t.contributionAdded)
+      }
+      setForm(EMPTY)
+    } catch (error) {
+      console.error('Error saving contribution:', error)
+      showToast(t.errorSaving, 'error')
+    }
   }
 
   const inputCls = "w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/60 text-gray-900 dark:text-gray-100 placeholder-gray-400 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
