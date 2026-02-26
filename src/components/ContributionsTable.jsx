@@ -62,7 +62,7 @@ const ClearAllIcon = () => (
 function formatAmount(amount, currency) {
   return currency === 'KHR'
     ? `${amount.toLocaleString()} ៛`
-    : `${amount.toFixed(2)}$`
+    : `${amount.toFixed(2)} $`
 }
 
 const KHR_TO_USD = 4000
@@ -285,7 +285,6 @@ function buildPdfHtml(contributions, language) {
     colName:      isKm ? 'ឈ្មោះ'                 : 'Name',
     colMethod:    isKm ? 'វិធីសាស្ត្រ'           : 'Method',
     colAmount:    isKm ? 'ចំនួនប្រាក់'           : 'Amount',
-    colDate:      isKm ? 'កាលបរិច្ឆេទ'           : 'Date',
     noData:       isKm ? 'មិនទាន់មានការចូលរួម'    : 'No contributions recorded.',
     methodCash:   isKm ? 'សាច់ប្រាក់'             : 'Cash',
     methodKHQR:   isKm ? 'ធនាគារ'                 : 'KHQR',
@@ -318,7 +317,6 @@ function buildPdfHtml(contributions, language) {
         </span>
       </td>
       <td class="right bold-col">${formatAmount(c.amount || 0, c.currency)}</td>
-      <td class="center muted">${new Date(c.createdAt).toLocaleDateString(isKm ? 'km-KH' : 'en-US')}</td>
     </tr>`).join('')
 
   const fontUrl = isKm
@@ -334,7 +332,7 @@ function buildPdfHtml(contributions, language) {
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>${s.title} – ${s.sectionTitle}</title>
+  <title>${s.title} – ${s.sectionTitle} – ${now}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="${fontUrl}" rel="stylesheet"/>
   <style>
@@ -449,11 +447,10 @@ function buildPdfHtml(contributions, language) {
         <th>${s.colName}</th>
         <th class="center">${s.colMethod}</th>
         <th class="right">${s.colAmount}</th>
-        <th class="center">${s.colDate}</th>
       </tr>
     </thead>
     <tbody>
-      ${rows || `<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:18px;">${s.noData}</td></tr>`}
+      ${rows || `<tr><td colspan="4" style="text-align:center;color:#94a3b8;padding:18px;">${s.noData}</td></tr>`}
     </tbody>
   </table>
 </body>
