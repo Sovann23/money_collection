@@ -452,48 +452,73 @@ function buildPdfHtml(contributions, language) {
 </html>`
 }
 
-/* ─── PDF Download — Blob URL approach (works on desktop + mobile) ─── */
+/* ─── PDF Download — cross-platform (iOS safe) ─── */
 async function downloadPdf(contributions, language) {
   const html = buildPdfHtml(contributions, language)
+  // Only apply the iOS workaround for Safari specifically.
+  // iOS Chrome (CriOS) and other iOS browsers handle print() fine like Android.
+  const isIOSSafari = /iPad|iPhone|iPod/.test(navigator.userAgent)
+    && !window.MSStream
+    && /Safari/.test(navigator.userAgent)
+    && !/CriOS/.test(navigator.userAgent)   // not Chrome on iOS
+    && !/FxiOS/.test(navigator.userAgent)   // not Firefox on iOS
+    && !/OPiOS/.test(navigator.userAgent)   // not Opera on iOS
+    && !/EdgiOS/.test(navigator.userAgent)  // not Edge on iOS
+  const isIOS = isIOSSafari
 
-  // Create a Blob URL from the HTML string.
-  // Using a Blob URL instead of window.open('', '_blank') avoids popup
-  // blockers on mobile and ensures the new tab contains ONLY the report HTML —
-  // not the parent app page. Mobile browsers (iOS Safari, Android Chrome)
-  // will then print/save exactly this standalone document.
   const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
   const url  = URL.createObjectURL(blob)
 
-  const win = window.open(url, '_blank')
+  if (isIOS) {
+    // ── iOS Safari ──────────────────────────────────────────────────────────
+    // Calling window.print() programmatically on iOS shows the AirPrint dialog
+    // but it auto-dismisses the instant the JS call returns — there is no fix.
+    // The correct iOS approach is to open the report in a new tab so the user
+    // can tap the Share button (□↑) → "Print" or "Save to Files" themselves.
+    // We inject a visible banner inside the report that instructs them.
+    const iosHtml = html.replace(
+      '<div class="top-bar">',
+      `<div style="
+        background:#1d4ed8;color:#fff;text-align:center;
+        padding:12px 16px;font-size:13px;font-weight:600;
+        font-family:sans-serif;letter-spacing:0.2px;
+        -webkit-print-color-adjust:exact;print-color-adjust:exact;
+      ">
+        Tap the Share button (□↑) at the bottom → then choose <strong>Print</strong> or <strong>Save to Files</strong>
+      </div>
+      <div class="top-bar">`
+    )
+    const iosBlob = new Blob([iosHtml], { type: 'text/html;charset=utf-8' })
+    const iosUrl  = URL.createObjectURL(iosBlob)
+    // Revoke original blob, keep iOS one alive until user is done
+    URL.revokeObjectURL(url)
+    window.open(iosUrl, '_blank')
+    // Keep alive for 10 min — long enough for user to print
+    setTimeout(() => URL.revokeObjectURL(iosUrl), 10 * 60 * 1000)
 
-  if (win) {
-    // Desktop: wait for the new window to load, then auto-trigger print dialog
-    win.onload = () => {
-      setTimeout(() => {
-        win.focus()
-        win.print()
-        // Revoke the blob URL after printing to free memory
-        win.onafterprint = () => {
-          URL.revokeObjectURL(url)
-        }
-        // Fallback revoke in case onafterprint doesn't fire
-        setTimeout(() => URL.revokeObjectURL(url), 60_000)
-      }, 400)
-    }
-    // Fallback if onload doesn't fire (some browsers)
-    setTimeout(() => {
-      try {
-        win.focus()
-        win.print()
-      } catch (_) { /* already printed */ }
-    }, 1500)
   } else {
-    // Popup was blocked — fall back to a direct download link the user can tap
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `contributions-${new Date().toISOString().slice(0, 10)}.html`
-    link.click()
-    setTimeout(() => URL.revokeObjectURL(url), 80000)
+    // ── Android / Desktop ───────────────────────────────────────────────────
+    const win = window.open(url, '_blank')
+
+    if (win) {
+      let printed = false
+      const doPrint = () => {
+        if (printed) return
+        printed = true
+        win.focus()
+        win.print()
+        win.onafterprint = () => URL.revokeObjectURL(url)
+        setTimeout(() => URL.revokeObjectURL(url), 60_000)
+      }
+      win.onload = () => setTimeout(doPrint, 500)
+    } else {
+      // Popup blocked fallback
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `contributions-${new Date().toISOString().slice(0, 10)}.html`
+      link.click()
+      setTimeout(() => URL.revokeObjectURL(url), 5000)
+    }
   }
 }
 
