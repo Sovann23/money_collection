@@ -322,11 +322,6 @@ function buildPdfHtml(contributions, language) {
 
   const totalUSD  = contributions.filter(c => c.currency === 'USD').reduce((sum, c) => sum + c.amount, 0)
   const totalKHR  = contributions.filter(c => c.currency === 'KHR').reduce((sum, c) => sum + c.amount, 0)
-  const khqrCount = contributions.filter(c => c.paymentMethod   === 'KHQR').length
-  const cashCount = contributions.filter(c => c.paymentMethod   === 'Cash').length
-  const usdCount  = contributions.filter(c => c.currency === 'USD').length
-  const khrCount  = contributions.filter(c => c.currency === 'KHR').length
-
   const sorted = contributions.slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
 
   const rows = sorted.map((c, i) => `
@@ -349,11 +344,6 @@ function buildPdfHtml(contributions, language) {
   const fontFamily = isKm
     ? "'Noto Sans Khmer','Plus Jakarta Sans',sans-serif"
     : "'Plus Jakarta Sans',sans-serif"
-
-  const barSvg           = buildBarChartSvg(khqrCount, cashCount, s.khqr, s.cash)
-  const doughnutSvg      = buildDoughnutSvg(usdCount, khrCount, s.dollar, s.riel)
-  const topContribSvg    = buildTopContributorsSvg(contributions, s.dollar, s.riel)
-  const currAmountSvg    = buildCurrencyAmountSvg(contributions, s.dollar, s.riel)
 
   return `<!DOCTYPE html>
 <html lang="${isKm ? 'km' : 'en'}">
@@ -409,25 +399,10 @@ function buildPdfHtml(contributions, language) {
     .card.purple{border-left:4px solid #818cf8;}
     .card-label{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:#94a3b8;margin-bottom:3px;}
     .card-value{font-size:18px;font-weight:800;color:#0f172a;}
-    .charts-section{margin-bottom:24px;}
     .section-heading{
       font-size:10px;font-weight:700;text-transform:uppercase;
       letter-spacing:0.8px;color:#64748b;margin-bottom:10px;
     }
-    .charts-row{display:flex;gap:16px;margin-bottom:16px;page-break-inside:avoid;break-inside:avoid;}
-    .charts-row.equal-height{align-items:stretch;}
-    .chart-card{
-      flex:1;
-      border:1px solid #e2e8f0;border-radius:12px;
-      padding:16px;background:#fafafa;
-      display:flex;flex-direction:column;align-items:center;justify-content:center;
-    }
-    .chart-title{
-      font-size:10px;font-weight:700;text-transform:uppercase;
-      letter-spacing:0.7px;color:#475569;
-      margin-bottom:12px;text-align:center;
-    }
-    .chart-card svg{display:block;margin:0 auto;}
     table{width:100%;border-collapse:collapse;border-radius:11px;overflow:hidden;border:1px solid #e2e8f0;}
     thead tr{background:#3B82F6;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     thead th{
@@ -483,37 +458,6 @@ function buildPdfHtml(contributions, language) {
       <div class="card-label">${s.participants}</div>
       <div class="card-value">${contributions.length}</div>
     </div>
-  </div>
-
-  <div class="charts-section">
-
-    <!-- Row 1: Payment Method + Currency Distribution -->
-    <!--
-    <div class="charts-row">
-      <div class="chart-card">
-        <div class="chart-title">${s.payBreakdown}</div>
-        ${barSvg}
-      </div>
-      <div class="chart-card">
-        <div class="chart-title">${s.currDist}</div>
-        ${doughnutSvg}
-      </div>
-    </div>
-    -->
-
-    <!-- Row 2: Currency Amount Breakdown + Top 15 Contributors -->
-    <!--
-    <div class="charts-row equal-height">
-      <div class="chart-card">
-        <div class="chart-title">${s.currAmount}</div>
-        ${currAmountSvg}
-      </div>
-      <div class="chart-card">
-        <div class="chart-title">${s.topContrib}</div>
-        ${topContribSvg}
-      </div>
-    </div>
-    -->
   </div>
 
   <div class="section-heading">${s.sectionTitle}</div>
@@ -716,12 +660,16 @@ export function ContributionsTable({ showToast, setEditingContribution }) {
             <table className="text-[15px] border-collapse" style={{ minWidth: '560px', width: '100%' }}>
               {/* Pixel min-widths prevent column crushing on small screens */}
               <colgroup>
-                <col style={{ width: '110px' }} /> {/* Name */}
-                <col style={{ width: '90px'  }} /> {/* Method */}
-                <col style={{ width: '110px' }} /> {/* Amount */}
-                <col style={{ width: '90px'  }} /> {/* Date */}
-                <col style={{ width: '70px'  }} /> {/* Actions */}
-                <col style={{ width: '100px' }} /> {/* Remark */}
+                {[
+                  '110px', // Name
+                  '90px',  // Method
+                  '110px', // Amount
+                  '90px',  // Date
+                  '70px',  // Actions
+                  '100px', // Remark
+                ].map((w) => (
+                  <col key={w} style={{ width: w }} />
+                ))}
               </colgroup>
 
               {/* Sticky header */}

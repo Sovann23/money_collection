@@ -73,6 +73,7 @@ export function ContributionsProvider({ children }) {
     const { data, error } = await supabase
       .from('contributions')
       .select('*')
+      .eq('user_id', user.id)
       .order('created_at', { ascending: false })
 
     console.log('fetchContributions result:', { data, error })
@@ -123,6 +124,7 @@ export function ContributionsProvider({ children }) {
         remark: data.remark
       })
       .eq('id', id)
+      .eq('user_id', user.id)
 
     if (error) {
       console.error('Error updating contribution:', error)
@@ -138,6 +140,7 @@ export function ContributionsProvider({ children }) {
       .from('contributions')
       .delete()
       .eq('id', id)
+      .eq('user_id', user.id)
 
     if (error) {
       console.error('Error deleting contribution:', error)
@@ -177,7 +180,7 @@ export function ContributionsProvider({ children }) {
     const { error } = await supabase
       .from('contributions')
       .delete()
-      .neq('id', 0) // Delete all
+      .eq('user_id', user.id) // Delete only current user's rows
 
     if (error) {
       console.error('Error clearing contributions:', error)
