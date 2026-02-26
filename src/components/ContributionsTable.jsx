@@ -1,7 +1,7 @@
 /*  <components />ContributionsTable.jsx
     - Scrollable table (capped height)
     - CSV import / export / Clear All
-    - "Download PDF" → in-page modal with bilingual report
+    - "Download PDF" → direct PDF generator (same on desktop + mobile)
       · Payment Method bar chart (pure SVG)
       · Currency Distribution doughnut chart (pure SVG)
       · Top 15 Contributors horizontal bar chart (pure SVG)
@@ -9,7 +9,7 @@
       · Contribution records table
 */
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef } from 'react'
 import { useLanguage } from '../contexts/LanguageContext'
 import { useContributions } from '../contexts/ContributionsContext'
 
@@ -55,18 +55,6 @@ const ClearAllIcon = () => (
     <polyline points="3 6 5 6 21 6" />
     <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
     <line x1="10" y1="11" x2="10" y2="17" /><line x1="14" y1="11" x2="14" y2="17" />
-  </svg>
-)
-const CloseIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-  </svg>
-)
-const PrintIcon = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <polyline points="6 9 6 2 18 2 18 9" />
-    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
-    <rect x="6" y="14" width="12" height="8" />
   </svg>
 )
 
@@ -161,7 +149,6 @@ function buildDoughnutSvg(usdCount, khrCount, usdLabel, khrLabel) {
 /** Horizontal bar chart: Top 15 Contributors — fixed height matching Currency Amount chart */
 function buildTopContributorsSvg(contributions, dollarLabel, rielLabel) {
   const KHR = 4000
-  // Group by name
   const map = {}
   contributions.forEach(c => {
     if (!map[c.participantName]) map[c.participantName] = { usd: 0, khr: 0 }
@@ -173,7 +160,6 @@ function buildTopContributorsSvg(contributions, dollarLabel, rielLabel) {
     .sort(([, a], [, b]) => (b.usd + b.khr / KHR) - (a.usd + a.khr / KHR))
     .slice(0, 15)
 
-  // Fixed dimensions — same height as currency amount chart (200px) so boxes align
   const W = 320
   const H = 200
   const labelW = 90
@@ -192,7 +178,6 @@ function buildTopContributorsSvg(contributions, dollarLabel, rielLabel) {
   const barH = Math.min(rowH * 0.55, 14)
   const maxVal = Math.max(...top15.map(([, v]) => v.usd + v.khr / KHR), 1)
 
-  // Grid lines at 0%, 50%, 100%
   const gridLines = [0, 0.5, 1].map(f => {
     const x = labelW + f * chartW
     const label = f === 0 ? '$0' : maxVal * f >= 1000 ? `$${((maxVal * f) / 1000).toFixed(0)}k` : `$${(maxVal * f).toFixed(0)}`
@@ -220,7 +205,6 @@ function buildTopContributorsSvg(contributions, dollarLabel, rielLabel) {
       <text x="${labelW + totalW + 3}" y="${barY + barH / 2 + 3}" font-size="7.5" fill="#64748b">${valLabel}</text>`
   }).join('')
 
-  // Legend at bottom
   const legY = H - 10
   const legX = labelW + chartW / 2 - 55
   const legend = `
@@ -285,61 +269,53 @@ function buildCurrencyAmountSvg(contributions, dollarLabel, rielLabel) {
   </svg>`
 }
 
-/* ─── PDF HTML builder ────────────────────────────────────── */
+/* ─── PDF Generator ────────────────────────────────────────── */
 function buildPdfHtml(contributions, language) {
   const isKm = language === 'km'
 
   const s = {
-    title:         isKm ? 'ប្រព័ន្ធកត់ត្រាប្រាក់'            : 'Money Collection',
-    subtitle:      isKm ? 'ផ្ទាំងគ្រប់គ្រង'                 : 'Admin Dashboard',
-    reportLabel:   isKm ? 'របាយការណ៍ការចូលរួម'              : 'Contribution Report',
-    generated:     isKm ? 'បានបង្កើតនៅ'                     : 'Generated on',
-    usdTotal:      isKm ? 'ប្រាក់សរុប (ដុល្លា)'                 : 'Total Collected (USD)',
-    khrTotal:      isKm ? 'ប្រាក់សរុប (រៀល)'                 : 'Total Collected (KHR)',
-    participants:  isKm ? 'ចំនួនអ្នកចូលរួម'                  : 'Total Participants',
-    chartsTitle:   isKm ? 'ការវិភាគទិន្នន័យ'                 : 'Data Overview',
-    payBreakdown:  isKm ? 'វិធីសាស្ត្រទទួលប្រាក់'           : 'Payment Method Breakdown',
-    currDist:      isKm ? 'ប្រភេទរូបិយប័ណ្ណ'              : 'Currency Distribution',
-    topContrib:    isKm ? 'អ្នកចូលរួមកំពូល ១៥'             : 'Top 15 Contributors',
-    currAmount:    isKm ? 'ចំនួនប្រាក់តាមរូបិយប័ណ្ណ'        : 'Currency Amount Breakdown',
-    sectionTitle:  isKm ? 'បញ្ជីអ្នកចូលរួម'               : 'Contribution Records',
-    noData:        isKm ? 'មិនទាន់មានការចូលរួម'              : 'No contributions recorded.',
-    colNo:         isKm ? 'លរ'                               : '#',
-    colName:       isKm ? 'ឈ្មោះ'                            : 'Name',
-    colMethod:     isKm ? 'វិធីសាស្ត្រ'                       : 'Method',
-    colAmount:     isKm ? 'ចំនួនប្រាក់'                             : 'Amount',
-    colRemark:     isKm ? 'កំណត់សម្គាល់'                      : 'Remark',
-    colDate:       isKm ? 'កាលបរិច្ឆេទ'                       : 'Date',
-    khqr:          'KHQR',
-    cash:          isKm ? 'សាច់ប្រាក់'                        : 'Cash',
-    dollar:        isKm ? 'ដុល្លារ'                           : 'Dollar',
-    riel:          isKm ? 'រៀល'                               : 'Riel',
+    title:        isKm ? 'ប្រព័ន្ធកត់ត្រាប្រាក់' : 'Money Collection',
+    subtitle:     isKm ? 'ផ្ទាំងគ្រប់គ្រង'      : 'Admin Dashboard',
+    generated:    isKm ? 'កាលបរិច្ឆេទ'          : 'Generated on',
+    usdTotal:     isKm ? 'ប្រាក់សរុប (ដុល្លា)'   : 'Total Collected (USD)',
+    khrTotal:     isKm ? 'ប្រាក់សរុប (រៀល)'      : 'Total Collected (KHR)',
+    participants: isKm ? 'ចំនួនអ្នកចូលរួម'       : 'Total Participants',
+    sectionTitle: isKm ? 'បញ្ជីអ្នកចូលរួម'        : 'Contribution Records',
+    colNo:        isKm ? 'លរ'                    : '#',
+    colName:      isKm ? 'ឈ្មោះ'                 : 'Name',
+    colMethod:    isKm ? 'វិធីសាស្ត្រ'           : 'Method',
+    colAmount:    isKm ? 'ចំនួនប្រាក់'           : 'Amount',
+    colDate:      isKm ? 'កាលបរិច្ឆេទ'           : 'Date',
+    noData:       isKm ? 'មិនទាន់មានការចូលរួម'    : 'No contributions recorded.',
   }
 
   const now = new Date().toLocaleDateString(isKm ? 'km-KH' : 'en-US', {
     year: 'numeric', month: 'long', day: 'numeric',
   })
 
-  const totalUSD  = contributions.filter(c => c.currency === 'USD').reduce((sum, c) => sum + c.amount, 0)
-  const totalKHR  = contributions.filter(c => c.currency === 'KHR').reduce((sum, c) => sum + c.amount, 0)
-  const sorted = contributions.slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+  const totalUSD = contributions.filter(c => c.currency === 'USD').reduce((sum, c) => sum + Number(c.amount || 0), 0)
+  const totalKHR = contributions.filter(c => c.currency === 'KHR').reduce((sum, c) => sum + Number(c.amount || 0), 0)
+
+  const sorted = contributions
+    .slice()
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
 
   const rows = sorted.map((c, i) => `
     <tr class="${i % 2 === 0 ? '' : 'row-alt'}">
       <td class="center muted">${i + 1}</td>
-      <td class="bold-col">${c.participantName}</td>
+      <td class="bold-col">${c.participantName || ''}</td>
       <td class="center">
         <span class="badge ${c.paymentMethod === 'KHQR' ? 'badge-blue' : 'badge-green'}">
-          ${c.paymentMethod === 'Cash' && isKm ? s.cash : c.paymentMethod}
+          ${c.paymentMethod || ''}
         </span>
       </td>
-      <td class="right bold-col">${formatAmount(c.amount, c.currency)}</td>
+      <td class="right bold-col">${formatAmount(c.amount || 0, c.currency)}</td>
       <td class="center muted">${new Date(c.createdAt).toLocaleDateString(isKm ? 'km-KH' : 'en-US')}</td>
     </tr>`).join('')
 
   const fontUrl = isKm
     ? 'https://fonts.googleapis.com/css2?family=Noto+Sans+Khmer:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap'
-    : 'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap'
+    : 'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap'
 
   const fontFamily = isKm
     ? "'Noto Sans Khmer','Plus Jakarta Sans',sans-serif"
@@ -350,7 +326,7 @@ function buildPdfHtml(contributions, language) {
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>${s.title} – ${s.reportLabel}</title>
+  <title>${s.title} – ${s.sectionTitle}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="${fontUrl}" rel="stylesheet"/>
   <style>
@@ -361,13 +337,6 @@ function buildPdfHtml(contributions, language) {
       padding:36px 44px;font-size:12.5px;
       -webkit-print-color-adjust:exact;
       print-color-adjust:exact;
-    }
-    @media screen and (max-width:600px){
-      body{padding:16px 14px;font-size:11px;}
-      .cards{flex-direction:column;}
-      .card-value{font-size:15px;}
-      table{font-size:10px;}
-      thead th,tbody td{padding:6px 8px;}
     }
     .top-bar{
       height:5px;
@@ -422,16 +391,20 @@ function buildPdfHtml(contributions, language) {
     .badge{display:inline-block;padding:2px 8px;border-radius:5px;font-size:10px;font-weight:700;}
     .badge-blue {background:#eff6ff;color:#2563eb;}
     .badge-green{background:#ecfdf5;color:#059669;}
-    .report-footer{
-      margin-top:20px;padding-top:12px;
-      border-top:1px solid #e2e8f0;
-      display:flex;justify-content:space-between;
-      font-size:10px;color:#94a3b8;
+
+    /* ── Mobile & Print fixes ── */
+    @page {
+      size: A4;
+      margin: 15mm 12mm;
     }
-    .footer-brand{font-weight:700;color:#64748b;}
-    @media print{
-      body{padding:20px 28px;}
-      .top-bar,.badge,.card{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    @media print {
+      body { padding: 0; }
+      .top-bar, .badge, .card, thead tr {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      /* Prevent table rows from breaking across pages */
+      tbody tr { page-break-inside: avoid; }
     }
   </style>
 </head>
@@ -479,64 +452,62 @@ function buildPdfHtml(contributions, language) {
 </html>`
 }
 
-/* ─── PDF Preview Modal ───────────────────────────────────── */
-function PdfModal({ html, onClose }) {
-  const iframeRef = useRef(null)
+/* ─── PDF Download — iframe approach (works on desktop + mobile) ─── */
+async function downloadPdf(contributions, language) {
+  const html = buildPdfHtml(contributions, language)
 
-  useEffect(() => {
-    const handler = (e) => { if (e.key === 'Escape') onClose() }
-    window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
-  }, [onClose])
+  // Remove any stale iframe from a previous call
+  const existing = document.getElementById('__pdf_print_iframe')
+  if (existing) existing.remove()
 
-  const handlePrint = () => {
-    const iframe = iframeRef.current
-    if (!iframe) return
+  const iframe = document.createElement('iframe')
+  iframe.id = '__pdf_print_iframe'
+  // Hidden but fully rendered — required for mobile browsers to trigger print
+  iframe.style.cssText = [
+    'position:fixed',
+    'top:0',
+    'left:0',
+    'width:100%',
+    'height:100%',
+    'border:none',
+    'z-index:99999',
+    'background:#fff',
+    'opacity:0',          // invisible to user but rendered by browser
+    'pointer-events:none',
+  ].join(';')
+
+  document.body.appendChild(iframe)
+
+  const doc = iframe.contentDocument || iframe.contentWindow.document
+  doc.open()
+  doc.write(html)
+  doc.close()
+
+  // Helper to trigger print and clean up
+  const triggerPrint = () => {
+    iframe.style.opacity = '1'           // make visible so mobile "Save as PDF" captures full content
+    iframe.style.pointerEvents = 'auto'
     iframe.contentWindow.focus()
     iframe.contentWindow.print()
+
+    // Clean up after print dialog closes
+    // onafterprint works on desktop; timeout fallback covers mobile
+    iframe.contentWindow.onafterprint = () => iframe.remove()
+    setTimeout(() => {
+      const el = document.getElementById('__pdf_print_iframe')
+      if (el) el.remove()
+    }, 5000)
   }
 
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
-    >
-      <div
-        className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl flex flex-col"
-        style={{ width: 'min(760px, 95vw)', height: 'min(660px, 92vh)' }}
-      >
-        <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200 dark:border-gray-700 flex-shrink-0 rounded-t-2xl bg-gray-50 dark:bg-gray-800">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-blue-500 flex items-center justify-center text-white font-bold text-sm">$</div>
-            <span className="font-bold text-sm text-gray-800 dark:text-gray-100">PDF Preview</span>
-            <span className="text-xs text-gray-400 dark:text-gray-500 ml-1">· Press Esc to close</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handlePrint}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-xs font-semibold transition-all shadow-sm hover:shadow-md"
-            >
-              <PrintIcon /> Print / Save PDF
-            </button>
-            <button
-              onClick={onClose}
-              className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all"
-              aria-label="Close"
-            >
-              <CloseIcon />
-            </button>
-          </div>
-        </div>
-        <iframe
-          ref={iframeRef}
-          className="flex-1 w-full rounded-b-2xl"
-          style={{ border: 'none', background: '#fff' }}
-          srcDoc={html}
-          title="PDF Preview"
-        />
-      </div>
-    </div>
-  )
+  // Wait for iframe content (fonts, styles) to fully load before printing
+  if (iframe.contentDocument.readyState === 'complete') {
+    // Already loaded — small delay for fonts
+    setTimeout(triggerPrint, 400)
+  } else {
+    iframe.onload = () => setTimeout(triggerPrint, 400)
+    // Hard fallback in case onload doesn't fire
+    setTimeout(triggerPrint, 1500)
+  }
 }
 
 /* ─── Main Component ──────────────────────────────────────── */
@@ -548,6 +519,7 @@ export function ContributionsTable({ showToast, setEditingContribution }) {
     importContributions,
     clearContributions,
   } = useContributions()
+
   const handleDelete = async (id) => {
     if (!window.confirm(t.confirmDelete)) return
     try {
@@ -558,8 +530,8 @@ export function ContributionsTable({ showToast, setEditingContribution }) {
       showToast(t.errorDeleting, 'error')
     }
   }
-  const [search, setSearch]   = useState('')
-  const [pdfHtml, setPdfHtml] = useState(null)
+
+  const [search, setSearch] = useState('')
   const fileRef = useRef(null)
 
   const filtered = contributions
@@ -591,11 +563,11 @@ export function ContributionsTable({ showToast, setEditingContribution }) {
           const vals = line.match(/(".*?"|[^,]+)(?=\s*,|\s*$)/g).map(v => v.replace(/^"|"$/g, '').trim())
           return {
             participantName: vals[0],
-            paymentMethod: vals[1],
-            currency: vals[2],
-            amount: parseFloat(vals[3]),
-            remark: vals[4] || '',
-            createdAt: vals[5] || new Date().toISOString(),
+            paymentMethod:   vals[1],
+            currency:        vals[2],
+            amount:          parseFloat(vals[3]),
+            remark:          vals[4] || '',
+            createdAt:       vals[5] || new Date().toISOString(),
           }
         })
         await importContributions(newRows)
@@ -628,17 +600,14 @@ export function ContributionsTable({ showToast, setEditingContribution }) {
 
   return (
     <>
-      {pdfHtml && <PdfModal html={pdfHtml} onClose={() => setPdfHtml(null)} />}
-
       <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm flex flex-col">
 
-        {/* Header row — stacks vertically on mobile */}
+        {/* Header row */}
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
           <div>
             <h3 className="text-base font-bold text-gray-900 dark:text-gray-50">{t.contributionList}</h3>
             <p className="text-xs text-gray-400 mt-0.5">{filtered.length} {t.totalEntries}</p>
           </div>
-          {/* Search takes full width on mobile, fixed width on desktop */}
           <div className="relative w-full sm:w-[220px] sm:flex-shrink-0">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><SearchIcon /></span>
             <input
@@ -650,29 +619,15 @@ export function ContributionsTable({ showToast, setEditingContribution }) {
           </div>
         </div>
 
-        {/*
-          Table uses pixel min-widths on columns so on narrow screens the table
-          overflows and the wrapper scrolls horizontally — no text ever overlaps.
-          thead+tbody are in the same table so columns always align perfectly.
-        */}
         <div className="rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
           <div className="overflow-x-auto overflow-y-auto scrollbar-thin" style={{ maxHeight: '360px' }}>
             <table className="text-[15px] border-collapse" style={{ minWidth: '560px', width: '100%' }}>
-              {/* Pixel min-widths prevent column crushing on small screens */}
               <colgroup>
-                {[
-                  '110px', // Name
-                  '90px',  // Method
-                  '110px', // Amount
-                  '90px',  // Date
-                  '70px',  // Actions
-                  '100px', // Remark
-                ].map((w) => (
+                {['110px','90px','110px','90px','70px','100px'].map((w) => (
                   <col key={w} style={{ width: w }} />
                 ))}
               </colgroup>
 
-              {/* Sticky header */}
               <thead className="sticky top-0 z-10">
                 <tr className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700">
                   {[t.name, t.method, t.amountCol, t.dateCol, t.actions, t.remarkCol].map((col, idx) => (
@@ -694,12 +649,9 @@ export function ContributionsTable({ showToast, setEditingContribution }) {
                     className={`border-b border-gray-50 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors
                       ${i % 2 === 0 ? '' : 'bg-gray-50/50 dark:bg-gray-700/20'}`}
                   >
-                    {/* Name */}
                     <td className="px-3 py-3 font-medium text-gray-900 dark:text-gray-100 max-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
                       {c.participantName}
                     </td>
-
-                    {/* Method — centered to match header */}
                     <td className="px-3 py-3 text-center">
                       <span className={`inline-flex items-center justify-center px-2 py-0.5 rounded-lg text-xs font-semibold whitespace-nowrap ${
                         c.paymentMethod === 'KHQR'
@@ -709,18 +661,12 @@ export function ContributionsTable({ showToast, setEditingContribution }) {
                         {c.paymentMethod}
                       </span>
                     </td>
-
-                    {/* Amount — right-aligned to match header */}
                     <td className="px-3 py-3 font-bold text-gray-900 dark:text-gray-100 whitespace-nowrap text-right">
                       {formatAmount(c.amount, c.currency)}
                     </td>
-
-                    {/* Date */}
                     <td className="px-3 py-3 text-gray-500 dark:text-gray-400 whitespace-nowrap text-sm">
                       {new Date(c.createdAt).toLocaleDateString()}
                     </td>
-
-                    {/* Actions */}
                     <td className="px-3 py-3">
                       <div className="flex items-center gap-1">
                         <button
@@ -739,8 +685,6 @@ export function ContributionsTable({ showToast, setEditingContribution }) {
                         </button>
                       </div>
                     </td>
-
-                    {/* Remark */}
                     <td className="px-3 py-3 text-gray-500 dark:text-gray-400 max-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
                       {c.remark || '—'}
                     </td>
@@ -757,9 +701,9 @@ export function ContributionsTable({ showToast, setEditingContribution }) {
           </div>
         </div>
 
-        {/* Action buttons — wrap on mobile, each button grows to fill row if needed */}
+        {/* Action buttons */}
         <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 no-print">
-          <button className={btnCls} onClick={() => setPdfHtml(buildPdfHtml(contributions, language))}>
+          <button className={btnCls} onClick={() => { void downloadPdf(contributions, language) }}>
             <DownloadIcon />{t.downloadPDF}
           </button>
           <button className={btnCls} onClick={exportCSV}>
