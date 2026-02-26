@@ -62,7 +62,7 @@ const ClearAllIcon = () => (
 function formatAmount(amount, currency) {
   return currency === 'KHR'
     ? `${amount.toLocaleString()} ៛`
-    : `$${amount.toFixed(2)}`
+    : `${amount.toFixed(2)}$`
 }
 
 const KHR_TO_USD = 4000
@@ -287,6 +287,14 @@ function buildPdfHtml(contributions, language) {
     colAmount:    isKm ? 'ចំនួនប្រាក់'           : 'Amount',
     colDate:      isKm ? 'កាលបរិច្ឆេទ'           : 'Date',
     noData:       isKm ? 'មិនទាន់មានការចូលរួម'    : 'No contributions recorded.',
+    methodCash:   isKm ? 'សាច់ប្រាក់'             : 'Cash',
+    methodKHQR:   isKm ? 'បាគង'                 : 'KHQR',
+  }
+
+  const translateMethod = (m) => {
+    if (m === 'Cash') return s.methodCash
+    if (m === 'KHQR') return s.methodKHQR
+    return m || ''
   }
 
   const now = new Date().toLocaleDateString(isKm ? 'km-KH' : 'en-US', {
@@ -306,7 +314,7 @@ function buildPdfHtml(contributions, language) {
       <td class="bold-col">${c.participantName || ''}</td>
       <td class="center">
         <span class="badge ${c.paymentMethod === 'KHQR' ? 'badge-blue' : 'badge-green'}">
-          ${c.paymentMethod || ''}
+          ${translateMethod(c.paymentMethod)}
         </span>
       </td>
       <td class="right bold-col">${formatAmount(c.amount || 0, c.currency)}</td>
@@ -670,7 +678,7 @@ export function ContributionsTable({ showToast, setEditingContribution }) {
                           ? 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400'
                           : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400'
                       }`}>
-                        {c.paymentMethod}
+                        {c.paymentMethod === 'Cash' ? (language === 'km' ? 'សាច់ប្រាក់' : 'Cash') : c.paymentMethod === 'KHQR' ? (language === 'km' ? 'បាគង' : 'KHQR') : c.paymentMethod}
                       </span>
                     </td>
                     <td className="px-3 py-3 font-bold text-gray-900 dark:text-gray-100 whitespace-nowrap text-right">

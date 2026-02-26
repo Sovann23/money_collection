@@ -76,7 +76,7 @@ export const translations = {
     contributionList: 'បញ្ជីអ្នកចូលរួម',
     totalEntries: 'ចំនួនសរុប',
     noContributions: 'មិនទាន់មានការចូលរួម។',
-    khqr: 'KHQR',
+    khqr: 'បាគង',
     cash: 'សាច់ប្រាក់',
     riel: 'រៀល',
     dollar: 'ដុល្លារ',
