@@ -375,7 +375,7 @@ function buildPdfHtml(contributions, language) {
       font-size:10px;font-weight:700;text-transform:uppercase;
       letter-spacing:0.8px;color:#64748b;margin-bottom:10px;
     }
-    table{width:100%;border-collapse:collapse;border-radius:11px;overflow:hidden;border:1px solid #e2e8f0;}
+    table{width:100%;border-collapse:collapse;border-radius:11px;overflow:hidden;border:1px solid #e2e8f0;table-layout:fixed;}
     thead tr{background:#3B82F6;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     thead th{
       padding:9px 13px;text-align:left;
@@ -390,7 +390,7 @@ function buildPdfHtml(contributions, language) {
     .center{text-align:center;}
     .right {text-align:right;}
     .bold-col{font-weight:700;color:#0f172a;}
-    .name-col{font-weight:700;color:#0f172a;font-size:14px;font-family:'Noto Sans Khmer','Plus Jakarta Sans',sans-serif;}
+    .name-col{font-weight:700;color:#0f172a;font-size:14px;font-family:'Noto Sans Khmer','Plus Jakarta Sans',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
     .muted{color:#64748b;}
     .badge{display:inline-block;padding:2px 8px;border-radius:5px;font-size:10px;font-weight:700;}
     .badge-blue {background:#eff6ff;color:#2563eb;}
@@ -439,6 +439,13 @@ function buildPdfHtml(contributions, language) {
 
   <div class="section-heading">${s.sectionTitle}</div>
   <table>
+    <colgroup>
+      <col style="width:6%;">
+      <col style="width:44%;">
+      <col style="width:18%;">
+      <col style="width:20%;">
+      <col style="width:12%;">
+    </colgroup>
     <thead>
       <tr>
         <th class="center" style="width:32px">${s.colNo}</th>
@@ -664,7 +671,7 @@ export function ContributionsTable({ showToast, setEditingContribution }) {
                     className={`border-b border-gray-50 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors
                       ${i % 2 === 0 ? '' : 'bg-gray-50/50 dark:bg-gray-700/20'}`}
                   >
-                    <td className="px-3 py-3 font-medium text-gray-900 dark:text-gray-100 max-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
+                    <td className="px-3 py-3 font-medium text-gray-900 dark:text-gray-100 whitespace-normal break-words">
                       {c.participantName}
                     </td>
                     <td className="px-3 py-3 text-center">
