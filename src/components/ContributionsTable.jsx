@@ -69,7 +69,7 @@ const KHR_TO_USD = 4000
 
 /* ─── SVG Chart Builders ──────────────────────────────────── */
 
-/** Bar chart: Bank vs Cash counts */
+/** Bar chart: KHQR vs Cash counts */
 function buildBarChartSvg(khqrCount, cashCount, khqrLabel, cashLabel) {
   const W = 340, H = 160
   const maxVal = Math.max(khqrCount, cashCount, 1)
@@ -271,7 +271,8 @@ function buildCurrencyAmountSvg(contributions, dollarLabel, rielLabel) {
 
 /* ─── PDF Generator ────────────────────────────────────────── */
 function buildPdfHtml(contributions, language) {
-  const isKm = language === 'km'
+  const lang = (language || '').toLowerCase()
+  const isKm = lang === 'km' || lang === 'kh' || lang.startsWith('km')
 
   const s = {
     title:        isKm ? 'ប្រព័ន្ធកត់ត្រាប្រាក់' : 'Money Collection',
@@ -287,12 +288,12 @@ function buildPdfHtml(contributions, language) {
     colAmount:    isKm ? 'ចំនួនប្រាក់'           : 'Amount',
     noData:       isKm ? 'មិនទាន់មានការចូលរួម'    : 'No contributions recorded.',
     methodCash:   isKm ? 'សាច់ប្រាក់'             : 'Cash',
-    methodBank:   isKm ? 'ធនាគារ'                : 'Bank',
+    methodKHQR:   isKm ? 'ធនាគារ'                 : 'Bank',
   }
 
   const translateMethod = (m) => {
     if (m === 'Cash') return s.methodCash
-    if (m === 'Bank' || m === 'KHQR') return s.methodBank
+    if (m === 'Bank' || m === 'KHQR') return s.methodKHQR
     return m || ''
   }
 
@@ -310,7 +311,7 @@ function buildPdfHtml(contributions, language) {
   const rows = sorted.map((c, i) => `
     <tr class="${i % 2 === 0 ? '' : 'row-alt'}">
       <td class="center muted">${i + 1}</td>
-      <td class="bold-col">${c.participantName || ''}</td>
+      <td class="name-col">${c.participantName || ''}</td>
       <td class="center">
         <span class="badge ${(c.paymentMethod === 'Bank' || c.paymentMethod === 'KHQR') ? 'badge-blue' : 'badge-green'}">
           ${translateMethod(c.paymentMethod)}
@@ -319,13 +320,9 @@ function buildPdfHtml(contributions, language) {
       <td class="right bold-col">${formatAmount(c.amount || 0, c.currency)}</td>
     </tr>`).join('')
 
-  const fontUrl = isKm
-    ? 'https://fonts.googleapis.com/css2?family=Noto+Sans+Khmer:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap'
-    : 'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap'
+  const fontUrl = 'https://fonts.googleapis.com/css2?family=Noto+Sans+Khmer:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap'
 
-  const fontFamily = isKm
-    ? "'Noto Sans Khmer','Plus Jakarta Sans',sans-serif"
-    : "'Plus Jakarta Sans',sans-serif"
+  const fontFamily = "'Plus Jakarta Sans','Noto Sans Khmer',sans-serif"
 
   return `<!DOCTYPE html>
 <html lang="${isKm ? 'km' : 'en'}">
@@ -393,6 +390,7 @@ function buildPdfHtml(contributions, language) {
     .center{text-align:center;}
     .right {text-align:right;}
     .bold-col{font-weight:700;color:#0f172a;}
+    .name-col{font-weight:700;color:#0f172a;font-size:14px;font-family:'Noto Sans Khmer','Plus Jakarta Sans',sans-serif;}
     .muted{color:#64748b;}
     .badge{display:inline-block;padding:2px 8px;border-radius:5px;font-size:10px;font-weight:700;}
     .badge-blue {background:#eff6ff;color:#2563eb;}
@@ -671,14 +669,14 @@ export function ContributionsTable({ showToast, setEditingContribution }) {
                     </td>
                     <td className="px-3 py-3 text-center">
                       <span className={`inline-flex items-center justify-center px-2 py-0.5 rounded-lg text-xs font-semibold whitespace-nowrap ${
-                        (c.paymentMethod === 'Bank' || c.paymentMethod === 'KHQR')
+                        c.paymentMethod === 'Bank' || c.paymentMethod === 'KHQR'
                           ? 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400'
                           : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400'
                       }`}>
                         {c.paymentMethod === 'Cash'
-                          ? (language === 'km' ? 'សាច់ប្រាក់' : 'Cash')
+                          ? t.cash
                           : (c.paymentMethod === 'Bank' || c.paymentMethod === 'KHQR')
-                            ? (language === 'km' ? 'ធនាគារ' : 'Bank')
+                            ? t.khqr
                             : c.paymentMethod}
                       </span>
                     </td>
