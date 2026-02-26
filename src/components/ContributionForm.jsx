@@ -37,9 +37,12 @@ export function ContributionForm({ showToast, editingContribution, setEditingCon
 
   useEffect(() => {
     if (editingContribution) {
+      const normalizedMethod = editingContribution.paymentMethod === 'KHQR'
+        ? 'Bank'
+        : editingContribution.paymentMethod
       setForm({
         name: editingContribution.participantName || '',
-        method: editingContribution.paymentMethod || '',
+        method: normalizedMethod || '',
         currency: editingContribution.currency || '',
         amount: editingContribution.amount.toString(),
         remark: editingContribution.remark || ''
@@ -123,8 +126,8 @@ export function ContributionForm({ showToast, editingContribution, setEditingCon
           <div className="flex gap-2">
             <button
               type="button"
-              className={optionBtn(form.method === 'KHQR', false)}
-              onClick={() => toggle('method', 'KHQR')}
+              className={optionBtn(form.method === 'Bank', false)}
+              onClick={() => toggle('method', 'Bank')}
             >
               <KhqrIcon />{t.khqr}
             </button>

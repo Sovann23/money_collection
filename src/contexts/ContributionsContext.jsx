@@ -14,10 +14,16 @@ export function ContributionsProvider({ children }) {
 
   console.log('ContributionsProvider render:', { user: !!user, contributionsLength: contributions.length, loading })
 
+  const normalizeMethod = (method) => {
+    if (method === 'KHQR') return 'Bank'
+    if (method === 'Bank') return 'Bank'
+    return method || ''
+  }
+
   const mapRow = (row) => ({
     id: row.id ?? row.ID,
     participantName: row.name ?? row.participantName ?? '',
-    paymentMethod: row.method ?? row.paymentMethod ?? '',
+    paymentMethod: normalizeMethod(row.method ?? row.paymentMethod),
     currency: row.currency ?? '',
     amount: row.amount ?? 0,
     remark: row.remark ?? '',
@@ -95,7 +101,7 @@ export function ContributionsProvider({ children }) {
       .from('contributions')
       .insert([{
         name: contribution.participantName,
-        method: contribution.paymentMethod,
+        method: normalizeMethod(contribution.paymentMethod),
         currency: contribution.currency,
         amount: contribution.amount,
         remark: contribution.remark,
@@ -118,7 +124,7 @@ export function ContributionsProvider({ children }) {
       .from('contributions')
       .update({
         name: data.participantName,
-        method: data.paymentMethod,
+        method: normalizeMethod(data.paymentMethod),
         currency: data.currency,
         amount: data.amount,
         remark: data.remark
@@ -154,7 +160,7 @@ export function ContributionsProvider({ children }) {
     if (!hasSupabaseConfig) throw new Error('Supabase not configured')
     const contributionsWithUser = newContributions.map(c => ({
       name: c.participantName,
-      method: c.paymentMethod,
+      method: normalizeMethod(c.paymentMethod),
       currency: c.currency,
       amount: c.amount,
       remark: c.remark,

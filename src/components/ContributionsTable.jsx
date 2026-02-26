@@ -69,7 +69,7 @@ const KHR_TO_USD = 4000
 
 /* ─── SVG Chart Builders ──────────────────────────────────── */
 
-/** Bar chart: KHQR vs Cash counts */
+/** Bar chart: Bank vs Cash counts */
 function buildBarChartSvg(khqrCount, cashCount, khqrLabel, cashLabel) {
   const W = 340, H = 160
   const maxVal = Math.max(khqrCount, cashCount, 1)
@@ -287,12 +287,12 @@ function buildPdfHtml(contributions, language) {
     colAmount:    isKm ? 'ចំនួនប្រាក់'           : 'Amount',
     noData:       isKm ? 'មិនទាន់មានការចូលរួម'    : 'No contributions recorded.',
     methodCash:   isKm ? 'សាច់ប្រាក់'             : 'Cash',
-    methodKHQR:   isKm ? 'ធនាគារ'                 : 'KHQR',
+    methodBank:   isKm ? 'ធនាគារ'                : 'Bank',
   }
 
   const translateMethod = (m) => {
     if (m === 'Cash') return s.methodCash
-    if (m === 'KHQR') return s.methodKHQR
+    if (m === 'Bank' || m === 'KHQR') return s.methodBank
     return m || ''
   }
 
@@ -312,7 +312,7 @@ function buildPdfHtml(contributions, language) {
       <td class="center muted">${i + 1}</td>
       <td class="bold-col">${c.participantName || ''}</td>
       <td class="center">
-        <span class="badge ${c.paymentMethod === 'KHQR' ? 'badge-blue' : 'badge-green'}">
+        <span class="badge ${(c.paymentMethod === 'Bank' || c.paymentMethod === 'KHQR') ? 'badge-blue' : 'badge-green'}">
           ${translateMethod(c.paymentMethod)}
         </span>
       </td>
@@ -671,11 +671,15 @@ export function ContributionsTable({ showToast, setEditingContribution }) {
                     </td>
                     <td className="px-3 py-3 text-center">
                       <span className={`inline-flex items-center justify-center px-2 py-0.5 rounded-lg text-xs font-semibold whitespace-nowrap ${
-                        c.paymentMethod === 'KHQR'
+                        (c.paymentMethod === 'Bank' || c.paymentMethod === 'KHQR')
                           ? 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400'
                           : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400'
                       }`}>
-                        {c.paymentMethod === 'Cash' ? (language === 'km' ? 'សាច់ប្រាក់' : 'Cash') : c.paymentMethod === 'KHQR' ? (language === 'km' ? 'ធនាគារ' : 'KHQR') : c.paymentMethod}
+                        {c.paymentMethod === 'Cash'
+                          ? (language === 'km' ? 'សាច់ប្រាក់' : 'Cash')
+                          : (c.paymentMethod === 'Bank' || c.paymentMethod === 'KHQR')
+                            ? (language === 'km' ? 'ធនាគារ' : 'Bank')
+                            : c.paymentMethod}
                       </span>
                     </td>
                     <td className="px-3 py-3 font-bold text-gray-900 dark:text-gray-100 whitespace-nowrap text-right">

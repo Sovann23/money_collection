@@ -26,7 +26,7 @@ export function PaymentBreakdownChart() {
   const { contributions } = useContributions()
   const chartRef = useRef(null)
 
-  const khqr = contributions.filter(c => c.paymentMethod === 'KHQR').length
+  const bank = contributions.filter(c => c.paymentMethod === 'Bank' || c.paymentMethod === 'KHQR').length
   const cash  = contributions.filter(c => c.paymentMethod === 'Cash').length
 
   useChart(chartRef, () => ({
@@ -35,7 +35,7 @@ export function PaymentBreakdownChart() {
       labels: [t.khqr, t.cash],
       datasets: [{
         label: t.participants,
-        data: [khqr, cash],
+        data: [bank, cash],
         backgroundColor: ['#3B82F6', '#10B981'],
         borderRadius: 8,
         borderSkipped: false,
