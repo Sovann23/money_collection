@@ -6,9 +6,16 @@
 @layer base {
   body {
     @apply font-sans bg-gray-50 text-gray-800 antialiased;
+    font-family: 'Plus Jakarta Sans','Noto Sans Khmer',sans-serif;
   }
   .dark body {
     @apply bg-gray-900 text-gray-100;
+  }
+  input,
+  textarea,
+  select,
+  button {
+    font-family: 'Plus Jakarta Sans','Noto Sans Khmer',sans-serif;
   }
 }
 
