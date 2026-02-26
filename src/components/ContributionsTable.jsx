@@ -10,6 +10,7 @@
 */
 
 import { useState, useRef } from 'react'
+import notoKhmerUrl from '../assets/fonts/NotoSansKhmer-VariableFont_wdth,wght.ttf'
 import { useLanguage } from '../contexts/LanguageContext'
 import { useContributions } from '../contexts/ContributionsContext'
 
@@ -270,7 +271,14 @@ function buildCurrencyAmountSvg(contributions, dollarLabel, rielLabel) {
 }
 
 /* ─── PDF Generator ────────────────────────────────────────── */
-function buildPdfHtml(contributions, language) {
+function arrayBufferToBase64(buffer) {
+  let binary = ''
+  const bytes = new Uint8Array(buffer)
+  for (let i = 0; i < bytes.byteLength; i += 1) binary += String.fromCharCode(bytes[i])
+  return btoa(binary)
+}
+
+function buildPdfHtml(contributions, language, fontBase64) {
   const lang = (language || '').toLowerCase()
   const isKm = lang === 'km' || lang === 'kh' || lang.startsWith('km')
 
@@ -321,8 +329,10 @@ function buildPdfHtml(contributions, language) {
     </tr>`).join('')
 
   const fontUrl = 'https://fonts.googleapis.com/css2?family=Noto+Sans+Khmer:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap'
-
   const fontFamily = "'Plus Jakarta Sans','Noto Sans Khmer',sans-serif"
+  const embeddedFont = fontBase64
+    ? `@font-face{font-family:'Noto Sans Khmer';src:url(data:font/ttf;base64,${fontBase64}) format('truetype');font-weight:400;font-style:normal;}`
+    : ''
 
   return `<!DOCTYPE html>
 <html lang="${isKm ? 'km' : 'en'}">
@@ -333,6 +343,7 @@ function buildPdfHtml(contributions, language) {
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="${fontUrl}" rel="stylesheet"/>
   <style>
+    ${embeddedFont}
     *{margin:0;padding:0;box-sizing:border-box;}
     body{
       font-family:${fontFamily};
@@ -464,7 +475,15 @@ function buildPdfHtml(contributions, language) {
 
 /* ─── PDF Download — cross-platform (iOS safe) ─── */
 async function downloadPdf(contributions, language) {
-  const html = buildPdfHtml(contributions, language)
+  let fontBase64 = ''
+  try {
+    const res = await fetch(notoKhmerUrl)
+    const buf = await res.arrayBuffer()
+    fontBase64 = arrayBufferToBase64(buf)
+  } catch {
+    fontBase64 = ''
+  }
+  const html = buildPdfHtml(contributions, language, fontBase64)
   // Only apply the iOS workaround for Safari specifically.
   // iOS Chrome (CriOS) and other iOS browsers handle print() fine like Android.
   const isIOSSafari = /iPad|iPhone|iPod/.test(navigator.userAgent)
@@ -632,12 +651,20 @@ export function ContributionsTable({ showToast, setEditingContribution }) {
           </div>
           <div className="relative w-full sm:w-[220px] sm:flex-shrink-0">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><SearchIcon /></span>
-            <input
-              className="w-full pl-9 pr-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/60 text-sm text-gray-800 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
-              placeholder={t.searchPlaceholder}
-              value={search}
-              onChange={e => setSearch(e.target.value)}
+            <div
+              role="textbox"
+              aria-label={t.searchPlaceholder}
+              contentEditable
+              suppressContentEditableWarning
+              onInput={(e) => setSearch(e.currentTarget.textContent || '')}
+              className="w-full pl-9 pr-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/60 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+              style={{ minHeight: '38px' }}
             />
+            {search.length === 0 && (
+              <span className="pointer-events-none absolute left-9 top-1/2 -translate-y-1/2 text-sm text-gray-400 dark:text-gray-500">
+                {t.searchPlaceholder}
+              </span>
+            )}
           </div>
         </div>
 
