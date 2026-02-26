@@ -288,7 +288,7 @@ function buildPdfHtml(contributions, language) {
     colDate:      isKm ? 'កាលបរិច្ឆេទ'           : 'Date',
     noData:       isKm ? 'មិនទាន់មានការចូលរួម'    : 'No contributions recorded.',
     methodCash:   isKm ? 'សាច់ប្រាក់'             : 'Cash',
-    methodKHQR:   isKm ? 'បាគង'                 : 'KHQR',
+    methodKHQR:   isKm ? 'ធនាគារ'                 : 'KHQR',
   }
 
   const translateMethod = (m) => {
@@ -678,7 +678,7 @@ export function ContributionsTable({ showToast, setEditingContribution }) {
                           ? 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400'
                           : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400'
                       }`}>
-                        {c.paymentMethod === 'Cash' ? (language === 'km' ? 'សាច់ប្រាក់' : 'Cash') : c.paymentMethod === 'KHQR' ? (language === 'km' ? 'បាគង' : 'KHQR') : c.paymentMethod}
+                        {c.paymentMethod === 'Cash' ? (language === 'km' ? 'សាច់ប្រាក់' : 'Cash') : c.paymentMethod === 'KHQR' ? (language === 'km' ? 'ធនាគារ' : 'KHQR') : c.paymentMethod}
                       </span>
                     </td>
                     <td className="px-3 py-3 font-bold text-gray-900 dark:text-gray-100 whitespace-nowrap text-right">
