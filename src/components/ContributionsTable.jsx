@@ -493,7 +493,7 @@ async function downloadPdf(contributions, language) {
     link.href = url
     link.download = `contributions-${new Date().toISOString().slice(0, 10)}.html`
     link.click()
-    setTimeout(() => URL.revokeObjectURL(url), 5000)
+    setTimeout(() => URL.revokeObjectURL(url), 80000)
   }
 }
 
