@@ -8,7 +8,7 @@ export default {
     extend: {
       fontFamily: {
         sans: ['"Plus Jakarta Sans"', '"Noto Sans Khmer"', 'sans-serif'],
-        khmer: ['"Noto Sans Khmer"', '"Plus Jakarta Sans"', 'sans-serif'],
+        khmer: ['"Noto Sans Khmer"', '"Plus Jakarta Sans"', ],
       },
       colors: {
         brand: {
