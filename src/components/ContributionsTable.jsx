@@ -452,61 +452,48 @@ function buildPdfHtml(contributions, language) {
 </html>`
 }
 
-/* ─── PDF Download — iframe approach (works on desktop + mobile) ─── */
+/* ─── PDF Download — Blob URL approach (works on desktop + mobile) ─── */
 async function downloadPdf(contributions, language) {
   const html = buildPdfHtml(contributions, language)
 
-  // Remove any stale iframe from a previous call
-  const existing = document.getElementById('__pdf_print_iframe')
-  if (existing) existing.remove()
+  // Create a Blob URL from the HTML string.
+  // Using a Blob URL instead of window.open('', '_blank') avoids popup
+  // blockers on mobile and ensures the new tab contains ONLY the report HTML —
+  // not the parent app page. Mobile browsers (iOS Safari, Android Chrome)
+  // will then print/save exactly this standalone document.
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
+  const url  = URL.createObjectURL(blob)
 
-  const iframe = document.createElement('iframe')
-  iframe.id = '__pdf_print_iframe'
-  // Hidden but fully rendered — required for mobile browsers to trigger print
-  iframe.style.cssText = [
-    'position:fixed',
-    'top:0',
-    'left:0',
-    'width:100%',
-    'height:100%',
-    'border:none',
-    'z-index:99999',
-    'background:#fff',
-    'opacity:0',          // invisible to user but rendered by browser
-    'pointer-events:none',
-  ].join(';')
+  const win = window.open(url, '_blank')
 
-  document.body.appendChild(iframe)
-
-  const doc = iframe.contentDocument || iframe.contentWindow.document
-  doc.open()
-  doc.write(html)
-  doc.close()
-
-  // Helper to trigger print and clean up
-  const triggerPrint = () => {
-    iframe.style.opacity = '1'           // make visible so mobile "Save as PDF" captures full content
-    iframe.style.pointerEvents = 'auto'
-    iframe.contentWindow.focus()
-    iframe.contentWindow.print()
-
-    // Clean up after print dialog closes
-    // onafterprint works on desktop; timeout fallback covers mobile
-    iframe.contentWindow.onafterprint = () => iframe.remove()
+  if (win) {
+    // Desktop: wait for the new window to load, then auto-trigger print dialog
+    win.onload = () => {
+      setTimeout(() => {
+        win.focus()
+        win.print()
+        // Revoke the blob URL after printing to free memory
+        win.onafterprint = () => {
+          URL.revokeObjectURL(url)
+        }
+        // Fallback revoke in case onafterprint doesn't fire
+        setTimeout(() => URL.revokeObjectURL(url), 60_000)
+      }, 400)
+    }
+    // Fallback if onload doesn't fire (some browsers)
     setTimeout(() => {
-      const el = document.getElementById('__pdf_print_iframe')
-      if (el) el.remove()
-    }, 5000)
-  }
-
-  // Wait for iframe content (fonts, styles) to fully load before printing
-  if (iframe.contentDocument.readyState === 'complete') {
-    // Already loaded — small delay for fonts
-    setTimeout(triggerPrint, 400)
+      try {
+        win.focus()
+        win.print()
+      } catch (_) { /* already printed */ }
+    }, 1500)
   } else {
-    iframe.onload = () => setTimeout(triggerPrint, 400)
-    // Hard fallback in case onload doesn't fire
-    setTimeout(triggerPrint, 1500)
+    // Popup was blocked — fall back to a direct download link the user can tap
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `contributions-${new Date().toISOString().slice(0, 10)}.html`
+    link.click()
+    setTimeout(() => URL.revokeObjectURL(url), 5000)
   }
 }
 
