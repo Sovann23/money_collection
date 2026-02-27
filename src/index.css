@@ -6,16 +6,9 @@
 @layer base {
   body {
     @apply font-sans bg-gray-50 text-gray-800 antialiased;
-    font-family: 'Plus Jakarta Sans','Noto Sans Khmer',sans-serif;
   }
   .dark body {
     @apply bg-gray-900 text-gray-100;
-  }
-  input,
-  textarea,
-  select,
-  button {
-    font-family: 'Plus Jakarta Sans','Noto Sans Khmer',sans-serif;
   }
 }
 
@@ -30,4 +23,25 @@
 @media print {
   .no-print { display: none !important; }
   body { background: white !important; color: black !important; }
+}
+
+/* Force all Khmer Unicode characters to render with Noto Sans Khmer */
+@font-face {
+  font-family: 'Noto Sans Khmer';
+  font-display: swap;
+}
+
+/* Target Khmer Unicode block (U+1780–U+17FF) explicitly */
+:lang(km),
+[lang="km"],
+.khmer-text {
+  font-family: 'Noto Sans Khmer', sans-serif !important;
+  font-feature-settings: "kern" 1;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Prevent FOUT (Flash of Unstyled Text) causing dotted circles */
+html {
+  font-display: swap;
 }

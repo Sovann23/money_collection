@@ -7,8 +7,9 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['"Plus Jakarta Sans"', '"Noto Sans Khmer"', 'sans-serif'],
-        khmer: ['"Noto Sans Khmer"', '"Plus Jakarta Sans"', ],
+              // ✅ Khmer font FIRST so Unicode shaping works immediately
+        sans: ['"Noto Sans Khmer"', '"Plus Jakarta Sans"', 'sans-serif'],
+        khmer: ['"Noto Sans Khmer"', 'sans-serif'],
       },
       colors: {
         brand: {

@@ -10,7 +10,6 @@
 */
 
 import { useState, useRef } from 'react'
-import notoKhmerUrl from '../assets/fonts/NotoSansKhmer-VariableFont_wdth,wght.ttf'
 import { useLanguage } from '../contexts/LanguageContext'
 import { useContributions } from '../contexts/ContributionsContext'
 
@@ -147,7 +146,7 @@ function buildDoughnutSvg(usdCount, khrCount, usdLabel, khrLabel) {
   </svg>`
 }
 
-/** Horizontal bar chart: Top 15 Contributors — fixed height matching Currency Amount chart */
+/** Horizontal bar chart: Top 15 Contributors */
 function buildTopContributorsSvg(contributions, dollarLabel, rielLabel) {
   const KHR = 4000
   const map = {}
@@ -221,7 +220,7 @@ function buildTopContributorsSvg(contributions, dollarLabel, rielLabel) {
   </svg>`
 }
 
-/** Vertical bar chart: Currency Amount Breakdown (USD vs KHR in USD scale) */
+/** Vertical bar chart: Currency Amount Breakdown */
 function buildCurrencyAmountSvg(contributions, dollarLabel, rielLabel) {
   const KHR = 4000
   const totalUSD = contributions.filter(c => c.currency === 'USD').reduce((s, c) => s + c.amount, 0)
@@ -271,14 +270,7 @@ function buildCurrencyAmountSvg(contributions, dollarLabel, rielLabel) {
 }
 
 /* ─── PDF Generator ────────────────────────────────────────── */
-function arrayBufferToBase64(buffer) {
-  let binary = ''
-  const bytes = new Uint8Array(buffer)
-  for (let i = 0; i < bytes.byteLength; i += 1) binary += String.fromCharCode(bytes[i])
-  return btoa(binary)
-}
-
-function buildPdfHtml(contributions, language, fontBase64) {
+function buildPdfHtml(contributions, language) {
   const lang = (language || '').toLowerCase()
   const isKm = lang === 'km' || lang === 'kh' || lang.startsWith('km')
 
@@ -328,25 +320,20 @@ function buildPdfHtml(contributions, language, fontBase64) {
       <td class="right bold-col">${formatAmount(c.amount || 0, c.currency)}</td>
     </tr>`).join('')
 
-  const fontUrl = 'https://fonts.googleapis.com/css2?family=Noto+Sans+Khmer:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap'
-  const fontFamily = "'Plus Jakarta Sans','Noto Sans Khmer',sans-serif"
-  const embeddedFont = fontBase64
-    ? `@font-face{font-family:'Noto Sans Khmer';src:url(data:font/ttf;base64,${fontBase64}) format('truetype');font-weight:400;font-style:normal;}`
-    : ''
-
+  // ✅ FIX: No fontUrl variable needed. @import inside <style> works on mobile blob windows.
+  // The old <link href="${fontUrl}"> was causing the PDF button to crash because fontUrl was undefined.
   return `<!DOCTYPE html>
 <html lang="${isKm ? 'km' : 'en'}">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>${s.title} – ${s.sectionTitle} – ${now}</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link href="${fontUrl}" rel="stylesheet"/>
   <style>
-    ${embeddedFont}
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Khmer:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+
     *{margin:0;padding:0;box-sizing:border-box;}
     body{
-      font-family:${fontFamily};
+      font-family:'Noto Sans Khmer','Plus Jakarta Sans',sans-serif;
       background:#fff;color:#1e293b;
       padding:36px 44px;font-size:12.5px;
       -webkit-print-color-adjust:exact;
@@ -386,7 +373,7 @@ function buildPdfHtml(contributions, language, fontBase64) {
       font-size:10px;font-weight:700;text-transform:uppercase;
       letter-spacing:0.8px;color:#64748b;margin-bottom:10px;
     }
-    table{width:100%;border-collapse:collapse;border-radius:11px;overflow:hidden;border:1px solid #e2e8f0;table-layout:fixed;}
+    table{width:100%;border-collapse:collapse;border-radius:11px;overflow:hidden;border:1px solid #e2e8f0;table-layout:fixed;box-sizing:border-box;}
     thead tr{background:#3B82F6;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     thead th{
       padding:9px 13px;text-align:left;
@@ -407,7 +394,6 @@ function buildPdfHtml(contributions, language, fontBase64) {
     .badge-blue {background:#eff6ff;color:#2563eb;}
     .badge-green{background:#ecfdf5;color:#059669;}
 
-    /* ── Mobile & Print fixes ── */
     @page {
       size: A4;
       margin: 15mm 12mm;
@@ -418,7 +404,6 @@ function buildPdfHtml(contributions, language, fontBase64) {
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
       }
-      /* Prevent table rows from breaking across pages */
       tbody tr { page-break-inside: avoid; }
     }
   </style>
@@ -451,15 +436,14 @@ function buildPdfHtml(contributions, language, fontBase64) {
   <div class="section-heading">${s.sectionTitle}</div>
   <table>
     <colgroup>
-      <col style="width:6%;">
-      <col style="width:44%;">
-      <col style="width:18%;">
+      <col style="width:5%;">
+      <col style="width:55%;">
       <col style="width:20%;">
-      <col style="width:12%;">
+      <col style="width:20%;">
     </colgroup>
     <thead>
       <tr>
-        <th class="center" style="width:32px">${s.colNo}</th>
+        <th class="center">${s.colNo}</th>
         <th>${s.colName}</th>
         <th class="center">${s.colMethod}</th>
         <th class="right">${s.colAmount}</th>
@@ -475,36 +459,21 @@ function buildPdfHtml(contributions, language, fontBase64) {
 
 /* ─── PDF Download — cross-platform (iOS safe) ─── */
 async function downloadPdf(contributions, language) {
-  let fontBase64 = ''
-  try {
-    const res = await fetch(notoKhmerUrl)
-    const buf = await res.arrayBuffer()
-    fontBase64 = arrayBufferToBase64(buf)
-  } catch {
-    fontBase64 = ''
-  }
-  const html = buildPdfHtml(contributions, language, fontBase64)
-  // Only apply the iOS workaround for Safari specifically.
-  // iOS Chrome (CriOS) and other iOS browsers handle print() fine like Android.
+  const html = buildPdfHtml(contributions, language)
+
   const isIOSSafari = /iPad|iPhone|iPod/.test(navigator.userAgent)
     && !window.MSStream
     && /Safari/.test(navigator.userAgent)
-    && !/CriOS/.test(navigator.userAgent)   // not Chrome on iOS
-    && !/FxiOS/.test(navigator.userAgent)   // not Firefox on iOS
-    && !/OPiOS/.test(navigator.userAgent)   // not Opera on iOS
-    && !/EdgiOS/.test(navigator.userAgent)  // not Edge on iOS
+    && !/CriOS/.test(navigator.userAgent)
+    && !/FxiOS/.test(navigator.userAgent)
+    && !/OPiOS/.test(navigator.userAgent)
+    && !/EdgiOS/.test(navigator.userAgent)
   const isIOS = isIOSSafari
 
   const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
   const url  = URL.createObjectURL(blob)
 
   if (isIOS) {
-    // ── iOS Safari ──────────────────────────────────────────────────────────
-    // Calling window.print() programmatically on iOS shows the AirPrint dialog
-    // but it auto-dismisses the instant the JS call returns — there is no fix.
-    // The correct iOS approach is to open the report in a new tab so the user
-    // can tap the Share button (□↑) → "Print" or "Save to Files" themselves.
-    // We inject a visible banner inside the report that instructs them.
     const iosHtml = html.replace(
       '<div class="top-bar">',
       `<div style="
@@ -519,14 +488,11 @@ async function downloadPdf(contributions, language) {
     )
     const iosBlob = new Blob([iosHtml], { type: 'text/html;charset=utf-8' })
     const iosUrl  = URL.createObjectURL(iosBlob)
-    // Revoke original blob, keep iOS one alive until user is done
     URL.revokeObjectURL(url)
     window.open(iosUrl, '_blank')
-    // Keep alive for 10 min — long enough for user to print
     setTimeout(() => URL.revokeObjectURL(iosUrl), 10 * 60 * 1000)
 
   } else {
-    // ── Android / Desktop ───────────────────────────────────────────────────
     const win = window.open(url, '_blank')
 
     if (win) {
@@ -541,7 +507,6 @@ async function downloadPdf(contributions, language) {
       }
       win.onload = () => setTimeout(doPrint, 500)
     } else {
-      // Popup blocked fallback
       const link = document.createElement('a')
       link.href = url
       link.download = `contributions-${new Date().toISOString().slice(0, 10)}.html`
@@ -651,20 +616,14 @@ export function ContributionsTable({ showToast, setEditingContribution }) {
           </div>
           <div className="relative w-full sm:w-[220px] sm:flex-shrink-0">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><SearchIcon /></span>
-            <div
-              role="textbox"
-              aria-label={t.searchPlaceholder}
-              contentEditable
-              suppressContentEditableWarning
-              onInput={(e) => setSearch(e.currentTarget.textContent || '')}
-              className="w-full pl-9 pr-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/60 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
-              style={{ minHeight: '38px' }}
+            {/* ✅ FIX: inline font style ensures Khmer renders correctly on mobile while typing */}
+            <input
+              style={{ fontFamily: "'Noto Sans Khmer', 'Plus Jakarta Sans', sans-serif" }}
+              className="w-full pl-9 pr-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/60 text-sm text-gray-800 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+              placeholder={t.searchPlaceholder}
+              value={search}
+              onChange={e => setSearch(e.target.value)}
             />
-            {search.length === 0 && (
-              <span className="pointer-events-none absolute left-9 top-1/2 -translate-y-1/2 text-sm text-gray-400 dark:text-gray-500">
-                {t.searchPlaceholder}
-              </span>
-            )}
           </div>
         </div>
 
