@@ -11,26 +11,25 @@
     @apply bg-gray-900 text-gray-100;
   }
 
-  /* ✅ Force Noto Sans Khmer on ALL inputs globally — iOS Safari fix */
+  /* ✅ CRITICAL iOS WebKit fix — all browsers on iPhone use WebKit */
+  /* Must be in CSS layer, NOT inline style — WebKit ignores inline fonts on inputs */
   input, textarea, select {
     font-family: 'Noto Sans Khmer', 'Plus Jakarta Sans', sans-serif !important;
+    -webkit-text-size-adjust: 100%;
   }
 }
 
 @layer utilities {
-  /* Scroll bar styling */
   .scrollbar-thin::-webkit-scrollbar        { width: 6px; height: 6px; }
   .scrollbar-thin::-webkit-scrollbar-track  { @apply bg-transparent; }
   .scrollbar-thin::-webkit-scrollbar-thumb  { @apply bg-gray-300 dark:bg-gray-600 rounded-full; }
 }
 
-/* Print styles */
 @media print {
   .no-print { display: none !important; }
   body { background: white !important; color: black !important; }
 }
 
-/* ✅ Force Khmer font on inputs — iOS Safari respects CSS class over inline style */
 :lang(km),
 [lang="km"],
 .khmer-text {

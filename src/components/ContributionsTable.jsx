@@ -617,13 +617,17 @@ export function ContributionsTable({ showToast, setEditingContribution }) {
           <div className="relative w-full sm:w-[220px] sm:flex-shrink-0">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><SearchIcon /></span>
             {/* ✅ FIX: inline font style ensures Khmer renders correctly on mobile while typing */}
-            <input
-              style={{ fontFamily: "'Noto Sans Khmer', 'Plus Jakarta Sans', sans-serif" }}
-              className="w-full pl-9 pr-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/60 text-sm text-gray-800 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
-              placeholder={t.searchPlaceholder}
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-            />
+          <input
+            lang="km"
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck={false}
+            className="w-full pl-9 pr-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/60 text-sm text-gray-800 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+            placeholder={t.searchPlaceholder}
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
           </div>
         </div>
 
