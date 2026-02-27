@@ -306,7 +306,11 @@ function buildPdfHtml(contributions, language) {
 
   const sorted = contributions
     .slice()
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .sort((a, b) => {
+      const nameA = (a.participantName || '').trim()
+      const nameB = (b.participantName || '').trim()
+      return nameA.localeCompare(nameB, 'km', { sensitivity: 'base' })
+    })
 
   const rows = sorted.map((c, i) => `
     <tr class="${i % 2 === 0 ? '' : 'row-alt'}">
@@ -367,17 +371,17 @@ function buildPdfHtml(contributions, language) {
     .card.blue  {border-left:4px solid #3B82F6;}
     .card.green {border-left:4px solid #10B981;}
     .card.purple{border-left:4px solid #818cf8;}
-    .card-label{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:#94a3b8;margin-bottom:3px;}
+    .card-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:#94a3b8;margin-bottom:3px;}
     .card-value{font-size:18px;font-weight:800;color:#0f172a;}
     .section-heading{
-      font-size:10px;font-weight:700;text-transform:uppercase;
+      font-size:13px;font-weight:700;text-transform:uppercase;
       letter-spacing:0.8px;color:#64748b;margin-bottom:10px;
     }
     table{width:100%;border-collapse:collapse;border-radius:11px;overflow:hidden;border:1px solid #e2e8f0;table-layout:fixed;box-sizing:border-box;}
     thead tr{background:#3B82F6;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     thead th{
       padding:9px 13px;text-align:left;
-      font-size:9.5px;font-weight:700;
+      font-size:12px;font-weight:700;
       text-transform:uppercase;letter-spacing:0.7px;
       color:#fff;white-space:nowrap;
     }
@@ -387,10 +391,10 @@ function buildPdfHtml(contributions, language) {
     .row-alt{background:#f8fafc;}
     .center{text-align:center;}
     .right {text-align:right;}
-    .bold-col{font-weight:700;color:#0f172a;}
-    .name-col{font-weight:700;color:#0f172a;font-size:14px;font-family:'Noto Sans Khmer','Plus Jakarta Sans',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .bold-col{font-weight:700;color:#0f172a;font-size:15px}
+    .name-col{font-weight:700;color:#0f172a;font-size:15px;font-family:'Noto Sans Khmer','Plus Jakarta Sans',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
     .muted{color:#64748b;}
-    .badge{display:inline-block;padding:2px 8px;border-radius:5px;font-size:10px;font-weight:700;}
+    .badge{display:inline-block;padding:2px 8px;border-radius:5px;font-size:12px;font-weight:700;}
     .badge-blue {background:#eff6ff;color:#2563eb;}
     .badge-green{background:#ecfdf5;color:#059669;}
 
@@ -436,10 +440,10 @@ function buildPdfHtml(contributions, language) {
   <div class="section-heading">${s.sectionTitle}</div>
   <table>
     <colgroup>
-      <col style="width:5%;">
-      <col style="width:55%;">
-      <col style="width:20%;">
-      <col style="width:20%;">
+      <col style="width:6%;">
+      <col style="width:44%;">
+      <col style="width:25%;">
+      <col style="width:25%;">
     </colgroup>
     <thead>
       <tr>
