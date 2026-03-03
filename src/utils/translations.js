@@ -104,7 +104,7 @@ export const translations = {
     importCSV: 'នាំចូល CSV',
     csvImported: 'បាននាំចូល CSV ដោយជោគជ័យ',
     csvError: 'មានបញ្ហាក្នុងការនាំចូល CSV',
-    topContributors: 'អ្នកចូលរួមច្រើនបំផុត ១៥ នាក់',
+    topContributors: 'អ្នកចូលរួមប្រាក់ច្រើនបំផុតចំនួន ១៥ នាក់',
     currencyAmountBreakdown: 'ចំនួនទឹកប្រាក់តាមរូបិយប័ណ្ណ',
     errorSaving: 'មានបញ្ហាក្នុងការរក្សាទុក',
     errorDeleting: 'មានបញ្ហាក្នុងការលុប',
