@@ -381,13 +381,13 @@ function buildPdfHtml(contributions, language) {
     thead tr{background:#3B82F6;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     thead th{
       padding:9px 13px;text-align:left;
-      font-size:12px;font-weight:700;
+      font-size:14px;font-weight:700;
       text-transform:uppercase;letter-spacing:0.7px;
       color:#fff;white-space:nowrap;
     }
     thead th.center{text-align:center;}
     thead th.right {text-align:right;}
-    tbody td{padding:8px 13px;border-bottom:1px solid #f1f5f9;color:#334155;vertical-align:middle;}
+    tbody td{padding:8px 13px;border-bottom:1px solid #f1f5f9;color:#334155;vertial-align:middle;}
     .row-alt{background:#f8fafc;}
     .center{text-align:center;}
     .right {text-align:right;}
